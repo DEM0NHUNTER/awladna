@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import LogoutButton from "../Auth/LogoutButton";
+import LogoutButton from "../auth/LogoutButton";
 
 const Header: React.FC = () => {
   const { user, loading } = useAuth();
