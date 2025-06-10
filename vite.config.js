@@ -4,15 +4,14 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react()],
-  root: ".",         // ensures working from front_end folder
-  base: "/",         // ensure proper asset paths
+  base: "/", // Ensures proper paths in production
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
     },
   },
   build: {
-    outDir: "dist",
+    outDir: "dist",        // Vercel expects this
     emptyOutDir: true,
   },
   server: {
@@ -24,6 +23,5 @@ export default defineConfig({
         secure: true,
       },
     },
-    historyApiFallback: true,
   },
 });
