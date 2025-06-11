@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // 🧩 add this
+    tailwindcss(), // ✅ Using the Vite plugin for Tailwind v4
   ],
   base: "/",
   resolve: {
@@ -20,7 +20,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://awladna-api-1017471338215.us-west1.run.app",
+        target: "https://awladna-api-1017471338215.us‑west1.run.app",
         changeOrigin: true,
         secure: true,
       },
