@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.tsx
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react'
+import { Link } from 'react-router-dom'
 
 const DashboardPage: React.FC = () => {
   return (
@@ -17,7 +17,7 @@ const DashboardPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
           <Link
             to="/login"
-            className="px-6 py-3 rounded-xl bg-primary text-white font-semibold shadow hover:bg-blue-800 transition-transform transform hover:scale-105 duration-200 w-full sm:w-auto"
+            className="px-6 py-3 rounded-xl bg-primary text-white font-semibold shadow hover:bg-primary-dark transition-transform transform hover:scale-105 duration-200 w-full sm:w-auto"
           >
             Login
           </Link>
@@ -30,8 +30,9 @@ const DashboardPage: React.FC = () => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default DashboardPage;
+export default DashboardPage
+
 

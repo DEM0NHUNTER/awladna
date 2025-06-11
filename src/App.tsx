@@ -19,7 +19,8 @@ const App: React.FC = () => {
         <Header />
         <main className="flex-grow bg-gray-50 p-4">
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
