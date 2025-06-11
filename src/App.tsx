@@ -11,6 +11,7 @@ import Profile from "./pages/Profile";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Dashboard from "./pages/Dashboard";
 
 const App: React.FC = () => {
   return (
