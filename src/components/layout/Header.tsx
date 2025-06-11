@@ -7,39 +7,39 @@ const Header: React.FC = () => {
   const { user, loading } = useAuth();
 
   return (
-    <header className="bg-white shadow">
-      <div className="container mx-auto flex justify-between items-center p-4">
-        <Link to="/" className="text-xl font-bold text-blue-600">
+    <header className="bg-white shadow-md">
+      <div className="container mx-auto flex justify-between items-center px-4 py-3">
+        <Link to="/" className="text-2xl font-semibold text-indigo-600">
           Awladna
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
           {loading ? (
-            <span>Loading...</span>
+            <span className="text-gray-500">Loading...</span>
           ) : user ? (
-            <div className="flex items-center space-x-4">
+            <>
               <Link
                 to="/profile"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-gray-700 hover:text-indigo-600 transition"
               >
                 Profile
               </Link>
               <LogoutButton />
-            </div>
+            </>
           ) : (
-            <div className="space-x-4">
+            <>
               <Link
                 to="/login"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="text-gray-700 hover:text-indigo-600 transition"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="text-gray-700 hover:text-blue-600 transition"
+                className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
               >
                 Register
               </Link>
-            </div>
+            </>
           )}
         </nav>
       </div>
