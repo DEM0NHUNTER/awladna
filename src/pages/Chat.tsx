@@ -1,6 +1,6 @@
 // src/pages/ChatPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import apiClient from '@/api/client';
+import apiClient from '@/api/axiosInstance';
 
 interface Message { id: string; text: string; fromChild: boolean; }
 
