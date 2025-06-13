@@ -1,52 +1,76 @@
 // src/pages/ChatPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import apiClient from '@/api/client';
-import { Link } from 'react-router-dom';
 
 interface Message { id: string; text: string; fromChild: boolean; }
 
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const intervalRef = useRef<number>();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Poll messages
   useEffect(() => {
     const fetchMessages = () => {
-      apiClient.get('/api/chat')
+      apiClient.get('/api/auth/chat/history/1?limit=100')
         .then(res => setMessages(res.data))
         .catch(console.error);
     };
 
     fetchMessages();
-    intervalRef.current = window.setInterval(fetchMessages, 3000);
-    return () => clearInterval(intervalRef.current);
+    const interval = window.setInterval(fetchMessages, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const sendMessage = async () => {
-    if (!input) return;
-    await apiClient.post('/api/chat', { text: input });
+    if (!input.trim()) return;
+    const payload = { child_id: 1, message: input, context: null };
+    await apiClient.post('/api/auth/chat', payload);
     setInput('');
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-100">
+      <header className="bg-white shadow px-6 py-4">
+        <h2 className="text-xl font-semibold text-gray-800">Chat with AI</h2>
+      </header>
+
       <div className="flex-1 overflow-auto p-6 space-y-4">
         {messages.map(m => (
-          <div key={m.id} className={`${m.fromChild ? 'text-right' : 'text-left'}`}>
-            <span className="inline-block bg-white p-2 rounded shadow">
+          <div
+            key={m.id}
+            className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}
+          >
+            <div className={`max-w-xs px-4 py-2 rounded-xl shadow ${
+              m.fromChild ? 'bg-blue-600 text-white rounded-br-none'
+                           : 'bg-white text-gray-800 rounded-bl-none'
+            }`}>
               {m.text}
-            </span>
+            </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
-      <div className="p-4 bg-gray-100 flex">
+
+      <div className="bg-white p-4 flex items-center space-x-2 border-t border-gray-300">
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
-          className="flex-1 border border-gray-300 rounded-l-md px-4"
+          placeholder="Type your message…"
+          className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
         />
-        <button onClick={sendMessage} className="px-4 bg-blue-600 text-white rounded-r-md">
+        <button
+          onClick={sendMessage}
+          className="px-6 py-2 bg-blue-600 text-white rounded-r-md transition hover:bg-blue-700 disabled:opacity-50"
+          disabled={!input.trim()}
+        >
           Send
         </button>
       </div>
