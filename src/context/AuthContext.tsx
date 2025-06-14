@@ -41,17 +41,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    await axiosInstance.post("/auth/login", { username: email, password });
+    const response = await axiosInstance.post("/auth/login", {
+        username: email,
+        password,
+    });
+
+    const token = response.data.access_token;
+    if (token) {
+        localStorage.setItem("access_token", token); // 🔐 Save it
+    }
+
+    await refreshUser(); // 🚀 This will now work because token is present
+  };
+
+
+  const register = async (email: string, password: string, name?: string) => {
+    const response = await axiosInstance.post("/auth/register", {
+        email,
+        password,
+        name,
+    });
+
+      const token = response.data.access_token;
+      if (token) {
+        localStorage.setItem("access_token", token);
+      }
+
     await refreshUser();
   };
 
-  const register = async (email: string, password: string, name?: string) => {
-    await axiosInstance.post("/auth/register", { email, password, name });
-    await refreshUser();
-  };
 
   const logout = async () => {
     await axiosInstance.post("/auth/logout");
+    localStorage.removeItem("access_token"); // 🔒 Clear the token
     setUser(null);
   };
 
