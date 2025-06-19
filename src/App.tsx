@@ -13,7 +13,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
-import ChildProfilePage from "./pages/ChildProfilePage";
+import ChildProfilePage from "./pages/Profile";
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -30,7 +30,7 @@ const App: React.FC = () => {
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/child-profiles/:childId" element={<ChildProfilePage />} />
+            <Route path="/child-profiles/:childId" element={<Profile />} />
           </Routes>
         </main>
         <Footer />
