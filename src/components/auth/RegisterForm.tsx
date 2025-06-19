@@ -24,7 +24,7 @@ const RegisterForm: React.FC = () => {
     setLoading(true);
     try {
       await register(email, password);
-      navigate("/profile");
+      navigate("/chat");
     } catch {
       setError("Registration failed");
     } finally {

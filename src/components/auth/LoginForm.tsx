@@ -17,7 +17,7 @@ const LoginForm: React.FC = () => {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/profile");
+      navigate("/chat");
     } catch {
       setError("Invalid email or password");
     } finally {
