@@ -46,10 +46,7 @@ const ChatPage: React.FC = () => {
       <Sidebar childId={childId} />
 
       <div className="flex flex-col flex-1 h-full">
-        <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-800">Chat with AI</h2>
-          <LogoutButton />
-        </header>
+
 
         <div className="flex-1 overflow-auto p-6 space-y-4">
           {messages.map(m => (
