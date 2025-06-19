@@ -41,26 +41,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     refreshUser();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // Prepare form‑encoded data as per FastAPI OAuth2 spec :contentReference[oaicite:1]{index=1}
-    const params = new URLSearchParams();
-    params.append("username", email);
-    params.append("password", password);
+    const login = async (email: string, password: string) => {
+      const params = new URLSearchParams();
+      params.append("username", email); // Must match OAuth2 field
+      params.append("password", password);
 
-    const response = await axiosInstance.post(
-      "/auth/login",
-      params,
-      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
-    );
+      const response = await axiosInstance.post(
+        "/auth/login",
+        params,
+        {
+          headers: { "Content-Type": "application/x-www-form-urlencoded" }
+        }
+      );
 
-    const token = response.data.access_token;
-    if (token) {
-      localStorage.setItem("access_token", token);
-      // Optionally set axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`
-    }
+      const token = response.data.access_token;
+      if (token) {
+        localStorage.setItem("access_token", token);
+      }
 
-    await refreshUser();
-  };
+      await refreshUser();
+    };
+
 
   const register = async (email: string, password: string, name?: string) => {
     const response = await axiosInstance.post("/auth/register", {
