@@ -1,3 +1,4 @@
+// src/context/AuthProvider.tsx
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 
@@ -29,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
       const response = await axiosInstance.get("/auth/me");
       setUser(response.data);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -41,39 +42,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await axiosInstance.post("/auth/login", {
-        username: email,
-        password,
-    });
+    // Prepare form‑encoded data as per FastAPI OAuth2 spec :contentReference[oaicite:1]{index=1}
+    const params = new URLSearchParams();
+    params.append("username", email);
+    params.append("password", password);
+
+    const response = await axiosInstance.post(
+      "/auth/login",
+      params,
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
 
     const token = response.data.access_token;
     if (token) {
-        localStorage.setItem("access_token", token); // 🔐 Save it
+      localStorage.setItem("access_token", token);
+      // Optionally set axiosInstance.defaults.headers.common.Authorization = `Bearer ${token}`
     }
-
-    await refreshUser(); // 🚀 This will now work because token is present
-  };
-
-
-  const register = async (email: string, password: string, name?: string) => {
-    const response = await axiosInstance.post("/auth/register", {
-        email,
-        password,
-        name,
-    });
-
-      const token = response.data.access_token;
-      if (token) {
-        localStorage.setItem("access_token", token);
-      }
 
     await refreshUser();
   };
 
+  const register = async (email: string, password: string, name?: string) => {
+    const response = await axiosInstance.post("/auth/register", {
+      email,
+      password,
+      name,
+    });
+
+    const token = response.data.access_token;
+    if (token) {
+      localStorage.setItem("access_token", token);
+    }
+
+    await refreshUser();
+  };
 
   const logout = async () => {
     await axiosInstance.post("/auth/logout");
-    localStorage.removeItem("access_token"); // 🔒 Clear the token
+    localStorage.removeItem("access_token");
     setUser(null);
   };
 
