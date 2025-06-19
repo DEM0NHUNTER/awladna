@@ -12,25 +12,23 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await register(email, password);
-      navigate("/profile");
-    } catch {
-      setError("Registration failed");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setLoading(true);
+      try {
+        await register(email, password);
+        // Show animation and redirect
+        setShowMessage(true);
+        setTimeout(() => {
+          navigate("/chat");
+        }, 1500);
+      } catch {
+        setError("Registration failed");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white shadow rounded">

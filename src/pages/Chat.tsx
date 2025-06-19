@@ -1,11 +1,14 @@
 // src/pages/ChatPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import apiClient from '@/api/axiosInstance';
-
+import LogoutButton from '../components/auth/LogoutButton';
+import Sidebar from '../components/layout/Sidebar'; // Import sidebar
+import { useParams } from 'react-router-dom'; // For URL params
 interface Message { id: string; text: string; fromChild: boolean; }
 
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
+  const { childId } = useParams<{ childId: string }>(); // Get child ID from URL
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -35,9 +38,13 @@ const ChatPage: React.FC = () => {
   };
 
   return (
+  <div className="flex h-[calc(100vh-64px)] bg-gray-100">
+      {/* Sidebar */}
+      <Sidebar childId={currentChildId} />
     <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-100">
-      <header className="bg-white shadow px-6 py-4">
+      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
         <h2 className="text-xl font-semibold text-gray-800">Chat with AI</h2>
+        <LogoutButton /> {/* Positioned at top-right */}
       </header>
 
       <div className="flex-1 overflow-auto p-6 space-y-4">

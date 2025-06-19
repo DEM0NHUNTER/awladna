@@ -11,19 +11,23 @@ const LoginForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await login(email, password);
-      navigate("/profile");
-    } catch {
-      setError("Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError(null);
+      setLoading(true);
+      try {
+        await login(email, password);
+        // Show animation and redirect
+        setShowMessage(true);
+        setTimeout(() => {
+          navigate("/chat");
+        }, 1500); // Match animation duration
+      } catch {
+        setError("Login failed");
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white shadow rounded">
