@@ -27,9 +27,6 @@ const Sidebar: React.FC<SidebarProps> = ({ childId }) => {
               Chat Page
             </Link>
           </li>
-          <li>
-            <DarkModeToggle /> {/* Dark mode toggle button */}
-          </li>
         </ul>
       </nav>
     </div>
