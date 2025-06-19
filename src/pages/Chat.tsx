@@ -2,22 +2,25 @@
 import React, { useEffect, useState, useRef } from 'react';
 import apiClient from '@/api/axiosInstance';
 import LogoutButton from '../components/auth/LogoutButton';
-import Sidebar from '../components/layout/Sidebar'; // Import sidebar
-import { useParams } from 'react-router-dom'; // For URL params
-interface Message { id: string; text: string; fromChild: boolean; }
+import Sidebar from '../components/layout/Sidebar';
+import { useParams } from 'react-router-dom';
+
+interface Message {
+  id: string;
+  text: string;
+  fromChild: boolean;
+}
 
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const { childId } = useParams<{ childId: string }>(); // Get child ID from URL
+  const { childId } = useParams<{ childId: string }>();
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Poll messages
   useEffect(() => {
     const fetchMessages = () => {
       apiClient.get('/api/auth/chat/history/1?limit=100')
@@ -38,48 +41,51 @@ const ChatPage: React.FC = () => {
   };
 
   return (
-  <div className="flex h-[calc(100vh-64px)] bg-gray-100">
+    <div className="flex h-[calc(100vh-64px)] bg-gray-100">
       {/* Sidebar */}
-      <Sidebar childId={currentChildId} />
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-gray-100">
-      <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
-        <h2 className="text-xl font-semibold text-gray-800">Chat with AI</h2>
-        <LogoutButton /> {/* Positioned at top-right */}
-      </header>
+      <Sidebar childId={childId} />
 
-      <div className="flex-1 overflow-auto p-6 space-y-4">
-        {messages.map(m => (
-          <div
-            key={m.id}
-            className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}
-          >
-            <div className={`max-w-xs px-4 py-2 rounded-xl shadow ${
-              m.fromChild ? 'bg-blue-600 text-white rounded-br-none'
-                           : 'bg-white text-gray-800 rounded-bl-none'
-            }`}>
-              {m.text}
+      <div className="flex flex-col flex-1 h-full">
+        <header className="bg-white shadow px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-gray-800">Chat with AI</h2>
+          <LogoutButton />
+        </header>
+
+        <div className="flex-1 overflow-auto p-6 space-y-4">
+          {messages.map(m => (
+            <div
+              key={m.id}
+              className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}
+            >
+              <div className={`max-w-xs px-4 py-2 rounded-xl shadow ${
+                m.fromChild
+                  ? 'bg-blue-600 text-white rounded-br-none'
+                  : 'bg-white text-gray-800 rounded-bl-none'
+              }`}>
+                {m.text}
+              </div>
             </div>
-          </div>
-        ))}
-        <div ref={messagesEndRef} />
-      </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
 
-      <div className="bg-white p-4 flex items-center space-x-2 border-t border-gray-300">
-        <input
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Type your message…"
-          className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
-        />
-        <button
-          onClick={sendMessage}
-          className="px-6 py-2 bg-blue-600 text-white rounded-r-md transition hover:bg-blue-700 disabled:opacity-50"
-          disabled={!input.trim()}
-        >
-          Send
-        </button>
+        <div className="bg-white p-4 flex items-center space-x-2 border-t border-gray-300">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            placeholder="Type your message…"
+            className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyDown={e => { if (e.key === 'Enter') sendMessage(); }}
+          />
+          <button
+            onClick={sendMessage}
+            className="px-6 py-2 bg-blue-600 text-white rounded-r-md transition hover:bg-blue-700 disabled:opacity-50"
+            disabled={!input.trim()}
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
