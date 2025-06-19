@@ -33,12 +33,16 @@ const ChatPage: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    const payload = { child_id: 1, message: input, context: null };
-    await apiClient.post('/api/auth/chat', payload);
-    setInput('');
-  };
+    const sendMessage = async () => {
+      if (!input.trim()) return;
+      const payload = {
+        child_id: 1,
+        message: input,
+        context: null
+      };
+      await apiClient.post('/api/auth/chat', payload); // Sends to backend
+      setInput('');
+    };
 
   return (
     <div className="flex h-[calc(100vh-64px)] bg-gray-100">
