@@ -1,20 +1,18 @@
 // front_end/src/api/axiosInstance.ts
 import axios from "axios";
 
-const axiosInstance = axios.create({
+const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
   withCredentials: true
 });
 
-axiosInstance.interceptors.request.use((config) => {
-  const token = localStorage.getItem("access_token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Remove credentials for public routes
+apiClient.interceptors.request.use((config) => {
+  const excludedRoutes = ["/auth/register", "/auth/verify-email"];
+  if (excludedRoutes.some(route => config.url?.includes(route))) {
+    config.withCredentials = false;
   }
   return config;
-}, (error) => {
-  console.error("Request interceptor error:", error);
-  return Promise.reject(error);
 });
 
-export default axiosInstance;
+export default apiClient;
