@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.tsx
-
+import { useAuth } from "../context/AuthContext";
 import React from 'react'
 import { Link } from 'react-router-dom'
 

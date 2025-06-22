@@ -4,7 +4,7 @@ import axiosInstance from "@/api/axiosInstance";
 import LogoutButton from '../components/auth/LogoutButton';
 import Sidebar from '../components/layout/Sidebar';
 import { useParams } from 'react-router-dom';
-
+import { useAuth } from '../../context/AuthContext';
 interface Message {
   id: string;
   text: string;
