@@ -20,6 +20,6 @@ const Register = () => {
         );
     }
 
-    return <RegistrationForm onSubmit={handleRegister} />;
+    return <RegisterForm onSubmit={handleRegister} />;
 };
 export default Register;
