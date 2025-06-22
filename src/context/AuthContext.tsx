@@ -67,28 +67,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Register function
-  const register = async (email: string, password: string, name?: string) => {
-    try {
-      const response = await axiosInstance.post("/auth/register", { 
-        email, 
-        password,
-        name
-      });
-      
-      const { access_token } = response.data;
-      localStorage.setItem("access_token", access_token);
-      
-      // Auto-verify user for demo purposes
-      await axiosInstance.post("/auth/verify-email", { 
-        token: "auto-verified" // This could be handled differently in production
-      });
-      
-      await refreshUser();
-      navigate("/chat");
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || "Registration failed");
-    }
-  };
+    const register = async (email: string, password: string, name?: string) => {
+      try {
+        const response = await axiosInstance.post("/auth/register", { email, password, name });
+        const { access_token } = response.data;
+        localStorage.setItem("access_token", access_token);
+
+        navigate("/verify-email");  // ✅ Redirect to verification page
+      } catch (error: any) {
+        throw new Error(error.response?.data?.detail || "Registration failed");
+      }
+    };
 
   // Logout function
   const logout = async () => {
@@ -103,20 +92,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Initialize auth state on mount
   useEffect(() => {
-    const initializeAuth = async () => {
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        try {
-          await refreshUser();
-        } catch (error) {
-          localStorage.removeItem("access_token");
-          setUser(null);
-        }
-      }
-      setLoading(false);
-    };
-    
-    initializeAuth();
+        const initializeAuth = async () => {
+            const token = localStorage.getItem("access_token");
+            if (token) {
+                try {
+                    await refreshUser(); // Only call /auth/me if token exists
+                } catch {
+                    localStorage.removeItem("access_token");
+                    setUser(null);
+                }
+            }
+            setLoading(false);
+        };
+
+        initializeAuth();
   }, []);
 
   // Provide auth context values

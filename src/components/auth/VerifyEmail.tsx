@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+ximport React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -12,25 +12,25 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      setError(null);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
 
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
 
-      setLoading(true);
-      try {
-        await register(email, password);
-        navigate("/verify-email");  // ✅ Use lowercase to match backend route
-      } catch {
-        setError("Registration failed");
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    try {
+      await register(email, password);
+      navigate("/VerifyEmail");
+    } catch {
+      setError("Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white shadow rounded">
