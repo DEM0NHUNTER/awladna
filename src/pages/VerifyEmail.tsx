@@ -1,7 +1,7 @@
 // src/pages/VerifyEmail.tsx
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { axiosInstance } from "@/api/axiosInstance";
+import axiosInstance from "@/api/axiosInstance";
 import { useAuth } from "@/context/AuthContext";
 
 const VerifyEmail: React.FC = () => {
