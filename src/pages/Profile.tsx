@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from "../../../context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
 
 const Profile: React.FC = () => {
