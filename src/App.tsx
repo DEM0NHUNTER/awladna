@@ -1,8 +1,7 @@
 // front_end/src/App.tsx
 import React from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { useAuth } from "./hooks/useAuth";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 
