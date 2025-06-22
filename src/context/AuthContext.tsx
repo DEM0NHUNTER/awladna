@@ -45,16 +45,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string) => {
     try {
-      const response = await axiosInstance.post("/auth/login", { 
-        email, 
-        password 
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password
       });
-      
+
       const { access_token } = response.data;
       localStorage.setItem("access_token", access_token);
-      
+
       await refreshUser();
-      
+
       // Check verification status after login
       if (user?.is_verified === false) {
         navigate("/verify-email");
@@ -130,5 +130,4 @@ export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
-    };
 };
