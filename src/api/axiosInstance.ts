@@ -8,9 +8,9 @@ const apiClient = axios.create({
 
 // Remove credentials for public routes
 apiClient.interceptors.request.use((config) => {
-  const excludedRoutes = ["/auth/register", "/auth/verify-email"];
+  const excludedRoutes = ["/auth/register", "/auth/verify-email", "/auth/login"];
   if (excludedRoutes.some(route => config.url?.includes(route))) {
-    config.withCredentials = false;
+    config.withCredentials = false;  // ❌ No credentials for public routes
   }
   return config;
 });
