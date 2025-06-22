@@ -2,16 +2,16 @@ import axios from "axios";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
-  withCredentials: true,
+  withCredentials: false,
 });
 
-// Add interceptor to remove token from public routes
+// Add a request interceptor to add auth token if available
 axiosInstance.interceptors.request.use((config) => {
-  const excludedRoutes = ["/auth/register", "/auth/verify-email", "/auth/login"];
-  if (excludedRoutes.includes(config.url || "")) {
-    config.headers["Authorization"] = "";
-    localStorage.removeItem("access_token");
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
 export default axiosInstance;
