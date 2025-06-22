@@ -1,19 +1,14 @@
-import React from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { Navigate, Outlet } from 'react-router-dom';
+import React from "react";
+import { Navigate, Outlet } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-const ProtectedRoute = () => {
+const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
 
-  // Allow unverified users to access /verify-email
-  if (!user) return <Navigate to="/login" />;
-  if (!user.is_verified && window.location.pathname !== "/verify-email") {
-    return <Navigate to="/verify-email" />;
-  }
-
-  return token ? <Outlet /> : <Navigate to="/login" />;
+  return <Outlet /> : <Navigate to="/login" />;
 };
 
 export default ProtectedRoute;
