@@ -1,6 +1,6 @@
 // src/pages/ChatPage.tsx
 import React, { useEffect, useState, useRef } from 'react';
-import apiClient from '@/api/axiosInstance';
+import axiosInstance from "@/api/axiosInstance";
 import LogoutButton from '../components/auth/LogoutButton';
 import Sidebar from '../components/layout/Sidebar';
 import { useParams } from 'react-router-dom';
