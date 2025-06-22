@@ -1,24 +1,29 @@
-// front_end/src/components/ErrorBoundary.tsx
-import React, { useState, useEffect } from "react";
+// src/components/ErrorBoundary.tsx
+import React, { Component } from "react";
 
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("RegisterForm error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong. Check console for details.</h1>;
+    }
+    return this.props.children;
+  }
 }
-
-const ErrorBoundary: React.FC<ErrorBoundaryProps> = ({ children }) => {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    setHasError(false);
-  }, []);
-
-  return hasError ? (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-red-600">Something went wrong</p>
-    </div>
-  ) : (
-    <>{children}</>
-  );
-};
 
 export default ErrorBoundary;
