@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";              // Bring in useState
+import { useNavigate } from "react-router-dom";      // Bring in useNavigate
+import apiClient from "../api/axiosInstance";        // Or wherever your client is
 import RegisterForm from "../components/auth/RegisterForm";
 
 const Register = () => {
