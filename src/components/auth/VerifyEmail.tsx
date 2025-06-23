@@ -24,7 +24,7 @@ const RegisterForm: React.FC = () => {
     setLoading(true);
     try {
       await register(email, password);
-      navigate("/VerifyEmail");
+      navigate("/login");
     } catch {
       setError("Registration failed");
     } finally {

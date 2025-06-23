@@ -24,7 +24,7 @@ const RegisterForm: React.FC = () => {
       setLoading(true);
       try {
         await register(email, password);
-        navigate("/verify-email");  // ✅ Use lowercase to match backend route
+        navigate("/login");  // ✅ Use lowercase to match backend route
       } catch {
         setError("Registration failed");
       } finally {
