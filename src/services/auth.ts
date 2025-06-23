@@ -5,7 +5,6 @@ import apiClient from './client';
 interface LoginPayload {
   email: string;
   password: string;
-  remember: boolean;
 }
 
 interface RegisterPayload {
@@ -19,8 +18,8 @@ interface ResetPasswordPayload {
   newPassword: string;
 }
 
-export const login = async ({ email, password, remember }: LoginPayload) => {
-  return apiClient.post('/api/auth/login', { email, password, remember });
+export const login = async ({ email, password}: LoginPayload) => {
+  return apiClient.post('/api/auth/login', { email, password});
 };
 
 export const register = async ({ email, password }: RegisterPayload) => {

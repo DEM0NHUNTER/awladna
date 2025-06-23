@@ -48,8 +48,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axiosInstance.post("/auth/login", {
         email,
         password,
-        remember: false  // ✅ Add this field
-
       });
 
       const { access_token } = response.data;
