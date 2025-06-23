@@ -56,7 +56,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await refreshUser();
 
       // Check verification status after login
-      if (user?.is_verified === false) {
+      await refreshUser();  // Still needed
+
+      if (response.data.is_verified === false) {
         navigate("/verify-email");
       } else {
         navigate("/chat");

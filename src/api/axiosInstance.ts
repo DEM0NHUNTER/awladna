@@ -1,4 +1,3 @@
-// front_end/src/api/axiosInstance.ts
 import axios from "axios";
 
 const apiClient = axios.create({
@@ -9,11 +8,18 @@ const apiClient = axios.create({
   withCredentials: true
 });
 
+// ✅ Attach Bearer token to all requests EXCEPT public ones
 apiClient.interceptors.request.use((config) => {
   const publicRoutes = ["/auth/register", "/auth/login", "/auth/verify-email"];
-  if (publicRoutes.some(route => config.url?.includes(route))) {
-    config.withCredentials = false;
+  const isPublic = publicRoutes.some(route => config.url?.includes(route));
+
+  if (!isPublic) {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
   }
+
   return config;
 });
 
