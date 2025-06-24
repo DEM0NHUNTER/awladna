@@ -11,7 +11,7 @@ export const useRequireChildProfiles = () => {
   useEffect(() => {
     const checkAndFetch = async () => {
       try {
-        const res = await axiosInstance.get("/child");
+        const res = await axiosInstance.get("/child/");
         setProfiles(res.data);
         if (res.data.length === 0) {
           navigate("/profile");
