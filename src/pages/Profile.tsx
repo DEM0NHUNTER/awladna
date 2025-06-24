@@ -22,7 +22,7 @@ const Profile: React.FC = () => {
 
     const fetchChild = async () => {
       try {
-        const res = await axiosInstance.get("/child/");
+        const res = await axiosInstance.get("/auth/child");
         if (res.data.length > 0) {
           setChild(res.data[0]);
           setChildId(res.data[0].child_id);
