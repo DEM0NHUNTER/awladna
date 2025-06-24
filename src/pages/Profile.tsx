@@ -2,42 +2,128 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
 
+const defaultChild = {
+  name: "",
+  gender: "",
+  birth_date: "",
+  behavioral_patterns: {},
+  emotional_state: {},
+};
+
 const Profile: React.FC = () => {
   const { user, loading } = useAuth();
-  const [profileData, setProfileData] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [child, setChild] = useState<any>(defaultChild);
+  const [childId, setChildId] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
 
-    const fetchProfile = async () => {
+    const fetchChild = async () => {
       try {
-        const res = await axiosInstance.get("/auth/me");
-        setProfileData(res.data);
-      } catch {
-        setError("Failed to fetch profile data.");
+        const res = await axiosInstance.get("/child");
+        if (res.data.length > 0) {
+          setChild(res.data[0]);
+          setChildId(res.data[0].child_id);
+          setIsEditing(false);
+        } else {
+          setIsEditing(true); // No child? Enable form to create one
+        }
+      } catch (err) {
+        setStatus("Failed to load child profile.");
       }
     };
 
-    fetchProfile();
+    fetchChild();
   }, [user]);
 
-  if (loading) return <p>Loading profile...</p>;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setChild({ ...child, [e.target.name]: e.target.value });
+  };
 
-  if (!user) return <p>You must be logged in to see this page.</p>;
+  const handleSave = async () => {
+    try {
+      if (childId) {
+        // Update existing
+        await axiosInstance.put(`/child/${childId}`, child);
+        setStatus("Child profile updated.");
+      } else {
+        // Create new
+        const res = await axiosInstance.post("/child", child);
+        setChild(res.data);
+        setChildId(res.data.child_id);
+        setStatus("Child profile created.");
+      }
+      setIsEditing(false);
+    } catch (err) {
+      setStatus("Error saving profile.");
+    }
+  };
+
+  if (loading) return <p>Loading...</p>;
+  if (!user) return <p>You must be logged in to view this page.</p>;
 
   return (
-    <div className="max-w-3xl mx-auto p-4 bg-white shadow rounded">
-      <h1 className="text-3xl font-bold mb-4">Your Profile</h1>
-      {error && <p className="text-red-600">{error}</p>}
-      {profileData ? (
-        <div>
-          <p><strong>Email:</strong> {profileData.email}</p>
-          {/* Add more profile info here as needed */}
-        </div>
-      ) : (
-        <p>No profile data available.</p>
-      )}
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
+      <h1 className="text-2xl font-bold mb-4">Child Profile</h1>
+
+      {status && <p className="mb-4 text-blue-600">{status}</p>}
+
+      <label className="block mb-3">
+        Name:
+        <input
+          name="name"
+          value={child.name}
+          onChange={handleChange}
+          disabled={!isEditing}
+          className="w-full border p-2 rounded mt-1"
+        />
+      </label>
+
+      <label className="block mb-3">
+        Gender:
+        <input
+          name="gender"
+          value={child.gender}
+          onChange={handleChange}
+          disabled={!isEditing}
+          className="w-full border p-2 rounded mt-1"
+        />
+      </label>
+
+      <label className="block mb-3">
+        Birth Date:
+        <input
+          name="birth_date"
+          type="date"
+          value={child.birth_date?.slice(0, 10) || ""}
+          onChange={handleChange}
+          disabled={!isEditing}
+          className="w-full border p-2 rounded mt-1"
+        />
+      </label>
+
+      {/* You can expand this to include textarea for behavioral_patterns/emotional_state */}
+      {/* For demo, skip encryption display */}
+
+      <div className="mt-4 space-x-4">
+        {isEditing ? (
+          <button
+            onClick={handleSave}
+            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+            Save
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          >
+            Edit
+          </button>
+        )}
+      </div>
     </div>
   );
 };

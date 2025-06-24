@@ -44,29 +44,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Login function
   const login = async (email: string, password: string) => {
-    try {
-      const response = await axiosInstance.post("/auth/login", {
-        email,
-        password,
-      });
+      try {
+        const response = await axiosInstance.post("/auth/login", {
+          email,
+          password,
+        });
 
-      const { access_token } = response.data;
-      localStorage.setItem("access_token", access_token);
+        const { access_token } = response.data;
+        localStorage.setItem("access_token", access_token);
 
-      await refreshUser();
+        await refreshUser(); // Ensure user is loaded
 
-      // Check verification status after login
-      await refreshUser();  // Still needed
+        // Check email verification
+        if (!response.data.is_verified) {
+          navigate("/verify-email");
+          return;
+        }
 
-      if (response.data.is_verified === false) {
-        navigate("/verify-email");
-      } else {
-        navigate("/chat");
+        // ✅ Check if user has children
+        const childrenRes = await axiosInstance.get("/child/me");
+        const hasChildren = childrenRes.data.length > 0;
+
+        // 🔁 Redirect accordingly
+        if (!hasChildren) {
+          navigate("/profile"); // Go create child profile
+        } else {
+          navigate("/chat"); // Go chat
+        }
+
+      } catch (error: any) {
+        throw new Error(error.response?.data?.detail || "Login failed");
       }
-    } catch (error: any) {
-      throw new Error(error.response?.data?.detail || "Login failed");
-    }
-  };
+    };
 
   // Register function
     const register = async (email: string, password: string, name?: string) => {
