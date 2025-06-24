@@ -1,3 +1,4 @@
+// src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
@@ -15,32 +16,29 @@ const Profile: React.FC = () => {
   const { user, loading } = useAuth();
   const [child, setChild] = useState<any>(defaultChild);
   const [childId, setChildId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(true);  // always editable initially
   const [status, setStatus] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // Always fetch existing profile (if any)
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      try {
-        const res = await axiosInstance.get("/auth/child");
-        if (Array.isArray(res.data) && res.data.length > 0) {
-          const first = res.data[0];
-          setChild(first);
-          setChildId(first.child_id);
-          setIsEditing(false);
+    axiosInstance.get("/auth/child")
+      .then(res => {
+        if (Array.isArray(res.data) && res.data.length > 0 && res.data[0]?.child_id) {
+          setChild(res.data[0]);
+          setChildId(res.data[0].child_id);
+          setIsEditing(true);
         } else {
           setChild(defaultChild);
           setChildId(null);
           setIsEditing(true);
         }
-      } catch {
+      })
+      .catch(() => {
         setStatus("Failed to load child profile.");
-        setChild(defaultChild);
-        setChildId(null);
         setIsEditing(true);
-      }
-    })();
+      });
   }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,29 +47,30 @@ const Profile: React.FC = () => {
 
   const handleSave = async () => {
     setStatus(null);
+    const payload = {
+      name: child.name,
+      gender: child.gender,
+      birth_date: child.birth_date,
+      behavioral_patterns: child.behavioral_patterns || {},
+      emotional_state: child.emotional_state || {},
+    };
+
     try {
-      const payload = {
-        ...child,
-        behavioral_patterns: child.behavioral_patterns || {},
-        emotional_state: child.emotional_state || {},
-      };
-
-      let res;
       if (childId) {
-        res = await axiosInstance.put(`/auth/child/${childId}`, payload);
+        await axiosInstance.put(`/auth/child/${childId}`, payload);
+        setStatus("Child profile updated.");
       } else {
-        res = await axiosInstance.post("/auth/child", payload);
-      }
-
-      setChild(res.data);
-      setChildId(res.data.child_id);
-      setStatus(childId ? "Child profile updated." : "Child profile created.");
-      setIsEditing(false);
-      if (!childId) {
+        const res = await axiosInstance.post("/auth/child/", payload);
+        setChild(res.data);
+        setChildId(res.data.child_id);
+        setStatus("Child profile created.");
         navigate(`/chat/${res.data.child_id}`);
       }
-    } catch {
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
       setStatus("Error saving profile.");
+      setIsEditing(true);
     }
   };
 
