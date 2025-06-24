@@ -1,8 +1,7 @@
-//src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
-import { useNavigate } from "react-router-dom"; // ✅ import
+import { useNavigate } from "react-router-dom";
 
 const defaultChild = {
   name: "",
@@ -16,62 +15,65 @@ const Profile: React.FC = () => {
   const { user, loading } = useAuth();
   const [child, setChild] = useState<any>(defaultChild);
   const [childId, setChildId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
-  const navigate = useNavigate(); // ✅ add this line
-
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
-
-    const fetchChild = async () => {
+    (async () => {
       try {
         const res = await axiosInstance.get("/auth/child");
-        if (Array.isArray(res.data) && res.data.length > 0 && res.data[0]?.child_id) {
-          setChild(res.data[0]);
-          setChildId(res.data[0].child_id);
+        if (Array.isArray(res.data) && res.data.length > 0) {
+          const first = res.data[0];
+          setChild(first);
+          setChildId(first.child_id);
           setIsEditing(false);
         } else {
-          // Show empty form so the user can create their first child
-          setChild({ name: "", gender: "", birth_date: "", behavioral_patterns: {}, emotional_state: {} });
+          setChild(defaultChild);
           setChildId(null);
           setIsEditing(true);
         }
-      } catch (err) {
+      } catch {
         setStatus("Failed to load child profile.");
+        setChild(defaultChild);
+        setChildId(null);
+        setIsEditing(true);
       }
-    };
-
-    fetchChild();
+    })();
   }, [user]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setChild({ ...child, [e.target.name]: e.target.value });
-    };
+  };
 
-    const handleSave = async () => {
-      try {
-        const childPayload = {
-          ...child,
-          behavioral_patterns: child.behavioral_patterns || {},
-          emotional_state: child.emotional_state || {},
-        };
+  const handleSave = async () => {
+    setStatus(null);
+    try {
+      const payload = {
+        ...child,
+        behavioral_patterns: child.behavioral_patterns || {},
+        emotional_state: child.emotional_state || {},
+      };
 
-        if (childId) {
-          await axiosInstance.put(`/auth/child/${childId}`, childPayload);
-          setStatus("Child profile updated.");
-        } else {
-          const res = await axiosInstance.post("/auth/child/", childPayload);
-          setChild(res.data);
-          setChildId(res.data.child_id);
-          setStatus("Child profile created.");
-          navigate(`/chat/${res.data.child_id}`);
-        }
-        setIsEditing(false);
-      } catch (err) {
-        setStatus("Error saving profile.");
+      let res;
+      if (childId) {
+        res = await axiosInstance.put(`/auth/child/${childId}`, payload);
+      } else {
+        res = await axiosInstance.post("/auth/child", payload);
       }
-    };
+
+      setChild(res.data);
+      setChildId(res.data.child_id);
+      setStatus(childId ? "Child profile updated." : "Child profile created.");
+      setIsEditing(false);
+      if (!childId) {
+        navigate(`/chat/${res.data.child_id}`);
+      }
+    } catch {
+      setStatus("Error saving profile.");
+    }
+  };
 
   if (loading) return <p>Loading...</p>;
   if (!user) return <p>You must be logged in to view this page.</p>;
@@ -115,9 +117,6 @@ const Profile: React.FC = () => {
           className="w-full border p-2 rounded mt-1"
         />
       </label>
-
-      {/* You can expand this to include textarea for behavioral_patterns/emotional_state */}
-      {/* For demo, skip encryption display */}
 
       <div className="mt-4 space-x-4">
         {isEditing ? (

@@ -56,15 +56,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        const childrenRes = await axiosInstance.get("/auth/child");
-        const children = childrenRes.data;
-
-        // ✅ Robust condition
-        if (Array.isArray(children) && children.length > 0 && children[0]?.child_id) {
-          const childId = children[0].child_id;
-          navigate(`/chat/${childId}`);
-        } else {
-          // ✅ No children yet — send to profile creation
+//         const childrenRes = await axiosInstance.get("/auth/child");
+//         const children = childrenRes.data;
+//
+//         // ✅ Robust condition
+//         if (Array.isArray(children) && children.length > 0 && children[0]?.child_id) {
+//           const childId = children[0].child_id;
+//           navigate(`/chat/${childId}`);
+//         } else {
+//           // ✅ No children yet — send to profile creation
           navigate("/profile");
         }
       } catch (error: any) {
