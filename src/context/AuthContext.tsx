@@ -63,7 +63,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           navigate("/profile"); // No child — go to first-time setup
         } else {
           const firstChildId = children[0].child_id;
-          navigate(`/chat/${firstChildId}`); // Redirect to first child's chat
+          navigate(`/chat/${childrenRes.data[0].child_id}`); // Redirect to first child's chat
         }
       } catch (error: any) {
         throw new Error(error.response?.data?.detail || "Login failed");

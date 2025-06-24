@@ -53,12 +53,14 @@ const Profile: React.FC = () => {
 
         if (childId) {
           await axiosInstance.put(`/auth/child/${childId}`, childPayload);
-          setStatus("Child profile updated.");
+          setStatus("Child profile created.");
+
         } else {
           const res = await axiosInstance.post("/auth/child", childPayload);
           setChild(res.data);
           setChildId(res.data.child_id);
           setStatus("Child profile created.");
+          navigate(`/chat/${res.data.child_id}`);
         }
         setIsEditing(false);
       } catch (err) {

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '@/api/axiosInstance';
 import Sidebar from '@/components/layout/Sidebar';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 
@@ -34,6 +34,13 @@ const ChatPage: React.FC = () => {
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!childId || isNaN(childIdNum)) {
+          navigate('/profile'); // 👈 Send to child profile creation page
+        }
+      }, [childId, childIdNum, navigate]);
+
+    if (!childId || isNaN(childIdNum)) return null;
     useEffect(() => {
       const fetchChildInfo = async () => {
         try {
