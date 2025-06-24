@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
-// Define types for user and auth context
 interface User {
   id: number;
   email: string;
@@ -21,73 +20,55 @@ interface AuthContextType {
   refreshUser: () => Promise<void>;
 }
 
-// Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
-  // Refresh user data
   const refreshUser = async () => {
     try {
       const response = await axiosInstance.get("/auth/me");
       setUser(response.data);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-    // Login function
-    const login = async (email: string, password: string) => {
-      try {
-        const response = await axiosInstance.post("/auth/login", { email, password });
-        const { access_token } = response.data;
-        localStorage.setItem("access_token", access_token);
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await axiosInstance.post("/auth/login", { email, password });
+      const { access_token } = response.data;
+      localStorage.setItem("access_token", access_token);
 
-        await refreshUser(); // Load user data
+      await refreshUser();
 
-        if (!response.data.is_verified) {
-          navigate("/verify-email");
-          return;
-        }
-
-//         const childrenRes = await axiosInstance.get("/auth/child");
-//         const children = childrenRes.data;
-//
-//         // ✅ Robust condition
-//         if (Array.isArray(children) && children.length > 0 && children[0]?.child_id) {
-//           const childId = children[0].child_id;
-//           navigate(`/chat/${childId}`);
-//         } else {
-//           // ✅ No children yet — send to profile creation
-          navigate("/profile");
-        }
-      } catch (error: any) {
-        console.error("Login error", error);
-        throw new Error(error.response?.data?.detail || "Login failed");
+      if (!response.data.is_verified) {
+        navigate("/verify-email");
+        return;
       }
-    };
 
+      navigate("/profile");
+    } catch (error: any) {
+      console.error("Login error", error);
+      throw new Error(error.response?.data?.detail || "Login failed");
+    }
+  };
 
-  // Register function
-    const register = async (email: string, password: string, name?: string) => {
-      try {
-        const response = await axiosInstance.post("/auth/register", { email, password, name });
-        const { access_token } = response.data;
-        localStorage.setItem("access_token", access_token);
+  const register = async (email: string, password: string, name?: string) => {
+    try {
+      const response = await axiosInstance.post("/auth/register", { email, password, name });
+      const { access_token } = response.data;
+      localStorage.setItem("access_token", access_token);
+      navigate("/verify-email");
+    } catch (error: any) {
+      throw new Error(error.response?.data?.detail || "Registration failed");
+    }
+  };
 
-        navigate("/verify-email");  // Redirect to verification page
-      } catch (error: any) {
-        throw new Error(error.response?.data?.detail || "Registration failed");
-      }
-    };
-
-  // Logout function
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -98,42 +79,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Initialize auth state on mount
   useEffect(() => {
-        const initializeAuth = async () => {
-            const token = localStorage.getItem("access_token");
-            if (token) {
-                try {
-                    await refreshUser(); // Only call /auth/me if token exists
-                } catch {
-                    localStorage.removeItem("access_token");
-                    setUser(null);
-                }
-            }
-            setLoading(false);
-        };
-
-        initializeAuth();
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        try {
+          await refreshUser();
+        } catch {
+          localStorage.removeItem("access_token");
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+    initializeAuth();
   }, []);
 
-  // Provide auth context values
-  const value = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    refreshUser
-  };
+  const value = { user, loading, login, register, logout, refreshUser };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {!loading && children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");
