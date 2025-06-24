@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
+import { useNavigate } from "react-router-dom"; // ✅ import
 
 const defaultChild = {
   name: "",
@@ -17,6 +18,8 @@ const Profile: React.FC = () => {
   const [childId, setChildId] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const navigate = useNavigate(); // ✅ add this line
+
 
   useEffect(() => {
     if (!user) return;
@@ -35,7 +38,9 @@ const Profile: React.FC = () => {
           setIsEditing(true);
         }
       } catch (err) {
-        setStatus("Failed to load child profile.");
+          console.error("Failed to load child profile:", err);
+          setStatus("Failed to load child profile.");
+        }
       }
     };
 
