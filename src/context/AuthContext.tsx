@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      navigate("/profile");
+      navigate("/chat");
     } catch (error: any) {
       console.error("Login error", error);
       throw new Error(error.response?.data?.detail || "Login failed");
