@@ -45,37 +45,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string) => {
       try {
-        const response = await axiosInstance.post("/auth/login", {
-          email,
-          password,
-        });
-
+        const response = await axiosInstance.post("/auth/login", { email, password });
         const { access_token } = response.data;
         localStorage.setItem("access_token", access_token);
 
-        await refreshUser(); // Ensure user is loaded
+        await refreshUser();
 
-        // Check email verification
         if (!response.data.is_verified) {
           navigate("/verify-email");
           return;
         }
 
-        // ✅ Check if user has children
         const childrenRes = await axiosInstance.get("/auth/child");
-        const hasChildren = childrenRes.data.length > 0;
+        const children = childrenRes.data;
 
-        // 🔁 Redirect accordingly
-        if (!hasChildren) {
-          navigate("/profile"); // Go create child profile
+        if (children.length === 0) {
+          navigate("/profile"); // No child — go to first-time setup
         } else {
-          navigate("/profile"); // Go chat
+          const firstChildId = children[0].child_id;
+          navigate(`/chat/${firstChildId}`); // Redirect to first child's chat
         }
-
       } catch (error: any) {
         throw new Error(error.response?.data?.detail || "Login failed");
       }
     };
+
 
   // Register function
     const register = async (email: string, password: string, name?: string) => {
@@ -84,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { access_token } = response.data;
         localStorage.setItem("access_token", access_token);
 
-        navigate("/verify-email");  // ✅ Redirect to verification page
+        navigate("/verify-email");  // Redirect to verification page
       } catch (error: any) {
         throw new Error(error.response?.data?.detail || "Registration failed");
       }

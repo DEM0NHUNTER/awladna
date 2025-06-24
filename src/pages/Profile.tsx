@@ -1,3 +1,4 @@
+//src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import axiosInstance from "../api/axiosInstance";
@@ -38,28 +39,32 @@ const Profile: React.FC = () => {
     fetchChild();
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setChild({ ...child, [e.target.name]: e.target.value });
-  };
+    };
 
-  const handleSave = async () => {
-    try {
-      if (childId) {
-        // Update existing
-        await axiosInstance.put(`/child/${childId}`, child);
-        setStatus("Child profile updated.");
-      } else {
-        // Create new
-        const res = await axiosInstance.post("/child", child);
-        setChild(res.data);
-        setChildId(res.data.child_id);
-        setStatus("Child profile created.");
+    const handleSave = async () => {
+      try {
+        const childPayload = {
+          ...child,
+          behavioral_patterns: child.behavioral_patterns || {},
+          emotional_state: child.emotional_state || {},
+        };
+
+        if (childId) {
+          await axiosInstance.put(`/auth/child/${childId}`, childPayload);
+          setStatus("Child profile updated.");
+        } else {
+          const res = await axiosInstance.post("/auth/child", childPayload);
+          setChild(res.data);
+          setChildId(res.data.child_id);
+          setStatus("Child profile created.");
+        }
+        setIsEditing(false);
+      } catch (err) {
+        setStatus("Error saving profile.");
       }
-      setIsEditing(false);
-    } catch (err) {
-      setStatus("Error saving profile.");
-    }
-  };
+    };
 
   if (loading) return <p>Loading...</p>;
   if (!user) return <p>You must be logged in to view this page.</p>;

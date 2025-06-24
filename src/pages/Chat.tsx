@@ -1,9 +1,10 @@
-// src/pages/ChatPage.tsx
+// src/pages/Chat.tsx
 import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '@/api/axiosInstance';
 import Sidebar from '@/components/layout/Sidebar';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import axios from 'axios';
 
 interface Message {
   id: string;
@@ -12,61 +13,107 @@ interface Message {
   text: string;
   fromChild: boolean;
 }
+interface ChildProfile {
+  name: string;
+  age: number;
+  gender: string;
+}
 
 const ChatPage: React.FC = () => {
   const { childId } = useParams<{ childId: string }>();
-  const childIdNum = Number(childId) || 1;
+  const childIdNum = Number(childId);
+  if (!childId || isNaN(childIdNum)) {
+    return <div className="p-4 text-red-500">Invalid or missing child ID in URL.</div>;
+  }
   const { user } = useAuth();
+  const [childInfo, setChildInfo] = useState<ChildProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Scroll to bottom on new messages
-  useEffect(() => {
+    useEffect(() => {
+      const fetchChildInfo = async () => {
+        try {
+          const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
+          setChildInfo(res.data);
+        } catch (err) {
+          console.error("Failed to fetch child info", err);
+        }
+      };
+      fetchChildInfo();
+    }, [childIdNum]);
+    // Scroll to bottom on new messages
+    useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    }, [messages]);
 
-  // Fetch and refresh chat history
-  useEffect(() => {
+    useEffect(() => {
+      const controller = new AbortController();
+
     const fetchMessages = async () => {
       try {
-        const res = await axiosInstance.get(`/auth/chat/history/${childIdNum}?limit=100`);
+        const res = await axiosInstance.get(`/auth/chat/history/${childIdNum}?limit=100`, {
+          signal: controller.signal
+        });
         const data = res.data as any[];
         setMessages(
           data.map(item => ({
             id: item.timestamp ?? Math.random().toString(),
             text: item.chatbot_response ?? item.user_input,
-            fromChild: Boolean(item.user_input),
+            fromChild: Boolean(item.user_input)
           }))
         );
       } catch (err) {
-        console.error(err);
-        setError('Failed to load chat history. Please try again.');
+        if (!axios.isCancel(err)) {
+          console.error(err);
+          setError("Failed to load chat history.");
+        }
       }
     };
 
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
-  }, [childIdNum]);
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 3000);
 
-  // Send new message
-  const sendMessage = async () => {
-    if (!input.trim()) return;
-    try {
-      await axiosInstance.post('/auth/chat', {
-        child_id: childIdNum,
-        message: input,
-        context: null
-      });
+      return () => {
+        clearInterval(interval);
+        controller.abort();
+      };
+    }, [childIdNum]);
+
+    // Send message function
+    const sendMessage = async () => {
+      if (!input.trim()) return;
+
+      const tempMessage: Message = {
+        id: Date.now().toString(),
+        text: input,
+        fromChild: true
+      };
+      setMessages(prev => [...prev, tempMessage]);
       setInput('');
-    } catch (err) {
-      console.error(err);
-      setError('Failed to send message.');
-    }
-  };
+      setIsLoading(true);
+      try {
+        const response = await axiosInstance.post('/auth/chat', {
+          child_id: childIdNum,
+          message: tempMessage.text,
+          context: null
+        });
+        const aiMessage: Message = {
+          id: Date.now().toString() + "-ai",
+          text: response.data.response,
+          fromChild: false
+        };
+        setMessages(prev => [...prev, aiMessage]); // ✅ Add this line
+      } catch (err) {
+        console.error(err);
+        setError('Failed to send message.');
+      } finally {
+            setIsLoading(false);
+      }
+    };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -74,9 +121,16 @@ const ChatPage: React.FC = () => {
 
       <div className="flex flex-col flex-1">
         <header className="bg-white shadow px-6 py-4 flex justify-between">
-          <h2 className="text-xl font-semibold">
-            Chat with AI{user?.email ? ` — ${user.email}` : ''}
-          </h2>
+          <div>
+            <h2 className="text-xl font-semibold">
+                Chat with AI{user?.email ? ` — ${user.email}` : ''}
+            </h2>
+            {childInfo && (
+            <p className="text-sm text-gray-600">
+              Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
+            </p>
+          )}
+          </div>
         </header>
 
         {error && <div className="text-red-600 p-4">{error}</div>}
@@ -98,6 +152,13 @@ const ChatPage: React.FC = () => {
               </div>
             </div>
           ))}
+          {isLoading && (
+          <div className="flex justify-start">
+            <div className="max-w-xs px-4 py-2 rounded-xl shadow bg-white text-gray-800 rounded-bl-none animate-pulse">
+              ...typing
+            </div>
+          </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
