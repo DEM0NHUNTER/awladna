@@ -1,14 +1,14 @@
 import axios from "axios";
 
-const base = import.meta.env.VITE_API_URL || "https://awladna-api-1017471338215.us-west1.run.app/api";
-const secureBase = base.replace(/^http:\/\//, "https://");
+const baseURL = import.meta.env.VITE_API_URL;
+if (!baseURL) throw new Error("Missing VITE_API_URL");
 
 const apiClient = axios.create({
-  baseURL: secureBase,
+  baseURL: baseURL,
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json"
   },
-  withCredentials: true,
+  withCredentials: true
 });
 
 apiClient.interceptors.request.use((config) => {
