@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { access_token } = response.data;
         localStorage.setItem("access_token", access_token);
 
-        await refreshUser();
+        await refreshUser(); // Load user data
 
         if (!response.data.is_verified) {
           navigate("/verify-email");
@@ -59,16 +59,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const childrenRes = await axiosInstance.get("/auth/child");
         const children = childrenRes.data;
 
-     // ✅ Only redirect to chat if a valid child profile exists
+        // ✅ Robust condition
         if (Array.isArray(children) && children.length > 0 && children[0]?.child_id) {
-          navigate(`/chat/${children[0].child_id}`);
+          const childId = children[0].child_id;
+          navigate(`/chat/${childId}`);
         } else {
-          navigate("/profile");  // ✅ Let the user create a child profile
+          // ✅ No children yet — send to profile creation
+          navigate("/profile");
         }
-        } catch (error: any) {
+      } catch (error: any) {
+        console.error("Login error", error);
         throw new Error(error.response?.data?.detail || "Login failed");
-        }
-        };
+      }
+    };
 
 
   // Register function

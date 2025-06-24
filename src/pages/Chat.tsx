@@ -23,7 +23,8 @@ const ChatPage: React.FC = () => {
   const { childId } = useParams<{ childId: string }>();
   const childIdNum = Number(childId);
   if (!childId || isNaN(childIdNum)) {
-    return <div className="p-4 text-red-500">Invalid or missing child ID in URL.</div>;
+      // Gracefully redirect to profile instead
+     return <Navigate to="/profile" replace />;
   }
   const { user } = useAuth();
   const [childInfo, setChildInfo] = useState<ChildProfile | null>(null);
