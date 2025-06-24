@@ -62,7 +62,7 @@ const Profile: React.FC = () => {
           setStatus("Child profile created.");
 
         } else {
-          const res = await axiosInstance.post("/auth/child", childPayload);
+          const res = await axiosInstance.post("/auth/child/", childPayload);
           setChild(res.data);
           setChildId(res.data.child_id);
           setStatus("Child profile created.");
