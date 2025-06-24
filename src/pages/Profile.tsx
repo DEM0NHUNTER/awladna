@@ -24,12 +24,15 @@ const Profile: React.FC = () => {
     const fetchChild = async () => {
       try {
         const res = await axiosInstance.get("/auth/child");
-        if (res.data.length > 0) {
+        if (Array.isArray(res.data) && res.data.length > 0 && res.data[0]?.child_id) {
           setChild(res.data[0]);
           setChildId(res.data[0].child_id);
           setIsEditing(false);
         } else {
-          setIsEditing(true); // No child? Enable form to create one
+          // Show empty form so the user can create their first child
+          setChild({ name: "", gender: "", birth_date: "", behavioral_patterns: {}, emotional_state: {} });
+          setChildId(null);
+          setIsEditing(true);
         }
       } catch (err) {
         setStatus("Failed to load child profile.");
