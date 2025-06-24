@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         // ✅ Check if user has children
-        const childrenRes = await axiosInstance.get("/child/me");
+        const childrenRes = await axiosInstance.get("/child");
         const hasChildren = childrenRes.data.length > 0;
 
         // 🔁 Redirect accordingly
