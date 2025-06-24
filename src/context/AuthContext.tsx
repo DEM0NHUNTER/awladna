@@ -39,11 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } finally {
       setLoading(false);
-    }
+    }   
   };
 
-  // Login function
-  const login = async (email: string, password: string) => {
+    // Login function
+    const login = async (email: string, password: string) => {
       try {
         const response = await axiosInstance.post("/auth/login", { email, password });
         const { access_token } = response.data;
@@ -59,11 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const childrenRes = await axiosInstance.get("/auth/child");
         const children = childrenRes.data;
 
-        if (children.length === 0) {
-          navigate("/profile"); // No child — go to first-time setup
+        if (!Array.isArray(children) || children.length === 0) {
+          navigate("/profile"); // ✅ First-time setup
         } else {
-          const firstChildId = children[0].child_id;
-          navigate(`/chat/${childrenRes.data[0].child_id}`); // Redirect to first child's chat
+          const firstChildId = children[0]?.child_id;
+          if (firstChildId) {
+            navigate(`/chat/${firstChildId}`); // ✅ Only if valid
+          } else {
+            navigate("/profile"); // fallback safety
+          }
         }
       } catch (error: any) {
         throw new Error(error.response?.data?.detail || "Login failed");
