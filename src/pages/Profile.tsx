@@ -38,9 +38,7 @@ const Profile: React.FC = () => {
           setIsEditing(true);
         }
       } catch (err) {
-          console.error("Failed to load child profile:", err);
-          setStatus("Failed to load child profile.");
-        }
+        setStatus("Failed to load child profile.");
       }
     };
 
