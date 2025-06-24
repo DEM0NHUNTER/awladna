@@ -59,8 +59,7 @@ const Profile: React.FC = () => {
 
         if (childId) {
           await axiosInstance.put(`/auth/child/${childId}`, childPayload);
-          setStatus("Child profile created.");
-
+          setStatus("Child profile updated.");
         } else {
           const res = await axiosInstance.post("/auth/child/", childPayload);
           setChild(res.data);

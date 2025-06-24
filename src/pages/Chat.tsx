@@ -35,11 +35,7 @@ const ChatPage: React.FC = () => {
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (!childId || isNaN(childIdNum)) {
-          navigate('/profile'); // 👈 Send to child profile creation page
-        }
-      }, [childId, childIdNum, navigate]);
+
 
     if (!childId || isNaN(childIdNum)) return null;
     useEffect(() => {
