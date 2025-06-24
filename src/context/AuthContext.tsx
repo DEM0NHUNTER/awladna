@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
     } finally {
       setLoading(false);
-    }   
+    }
   };
 
     // Login function
@@ -59,20 +59,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const childrenRes = await axiosInstance.get("/auth/child");
         const children = childrenRes.data;
 
-        if (!Array.isArray(children) || children.length === 0) {
-          navigate("/profile"); // ✅ First-time setup
+     // ✅ Only redirect to chat if a valid child profile exists
+        if (Array.isArray(children) && children.length > 0 && children[0]?.child_id) {
+          navigate(`/chat/${children[0].child_id}`);
         } else {
-          const firstChildId = children[0]?.child_id;
-          if (firstChildId) {
-            navigate(`/chat/${firstChildId}`); // ✅ Only if valid
-          } else {
-            navigate("/profile"); // fallback safety
-          }
+          navigate("/profile");  // ✅ Let the user create a child profile
         }
-      } catch (error: any) {
+        } catch (error: any) {
         throw new Error(error.response?.data?.detail || "Login failed");
-      }
-    };
+        }
+        };
 
 
   // Register function
