@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axiosInstance from '@/api/axiosInstance';
 import Sidebar from '@/components/layout/Sidebar';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 
