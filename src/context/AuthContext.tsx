@@ -1,6 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import axiosInstance from "../api/axiosInstance";
+// front_end/src/context/AuthContext.tsx
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 
 interface User {
   id: number;
@@ -18,40 +25,62 @@ interface AuthContextType {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  getChildProfiles: () => Promise<any[]>;
+  childProfiles: any[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [childProfiles, setChildProfiles] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const refreshUser = async () => {
     try {
-      const response = await axiosInstance.get("/auth/me");
-      setUser(response.data);
+      const res = await axiosInstance.get("/auth/me");
+      setUser(res.data);
+      if (res.data.email) {
+        const profiles = await getChildProfiles();
+        setChildProfiles(profiles);
+      }
     } catch {
       setUser(null);
+      setChildProfiles([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const getChildProfiles = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/child");
+      setChildProfiles(res.data);
+      return res.data;
+    } catch {
+      return [];
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
-      const response = await axiosInstance.post("/auth/login", { email, password });
-      const { access_token } = response.data;
+      const res = await axiosInstance.post("/auth/login", { email, password });
+      const { access_token } = res.data;
       localStorage.setItem("access_token", access_token);
-
       await refreshUser();
 
-      if (!response.data.is_verified) {
+      if (!res.data.is_verified) {
         navigate("/verify-email");
         return;
       }
 
-      navigate("/chat");
+      const profiles = await getChildProfiles();
+      if (profiles.length > 0) {
+        navigate(`/chat/${profiles[0].id}`);
+      } else {
+        navigate("/profile");
+      }
     } catch (error: any) {
       console.error("Login error", error);
       throw new Error(error.response?.data?.detail || "Login failed");
@@ -60,8 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (email: string, password: string, name?: string) => {
     try {
-      const response = await axiosInstance.post("/auth/register", { email, password, name });
-      const { access_token } = response.data;
+      const res = await axiosInstance.post("/auth/register", { email, password, name });
+      const { access_token } = res.data;
       localStorage.setItem("access_token", access_token);
       navigate("/verify-email");
     } catch (error: any) {
@@ -75,6 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       localStorage.removeItem("access_token");
       setUser(null);
+      setChildProfiles([]);
       navigate("/");
     }
   };
@@ -83,25 +113,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       const token = localStorage.getItem("access_token");
       if (token) {
-        try {
-          await refreshUser();
-        } catch {
-          localStorage.removeItem("access_token");
-          setUser(null);
-        }
+        await refreshUser();
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
     initializeAuth();
   }, []);
 
-  const value = { user, loading, login, register, logout, refreshUser };
-
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, login, register, logout, refreshUser, getChildProfiles, childProfiles }}
+    >
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };

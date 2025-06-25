@@ -1,5 +1,6 @@
+// front_end/src/components/auth/LoginForm.tsx
 import React, { useState } from "react";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const LoginForm: React.FC = () => {
@@ -16,7 +17,10 @@ const LoginForm: React.FC = () => {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      const redirectPath = await login(email, password);
+      if (redirectPath) {
+        navigate(redirectPath);
+      }
     } catch {
       setError("Invalid email or password");
     } finally {
@@ -25,31 +29,35 @@ const LoginForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      <label className="block mb-2">
-        Email
+    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-6 bg-white shadow rounded space-y-4">
+      <h2 className="text-2xl font-bold text-center">Login</h2>
+
+      {error && <p className="text-red-600 text-center">{error}</p>}
+
+      <div>
+        <label className="block mb-1">Email</label>
         <input
           type="email"
-          className="w-full p-2 border border-gray-300 rounded mt-1"
+          className="w-full p-2 border border-gray-300 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="username"
         />
-      </label>
-      <label className="block mb-4">
-        Password
+      </div>
+
+      <div>
+        <label className="block mb-1">Password</label>
         <input
           type="password"
-          className="w-full p-2 border border-gray-300 rounded mt-1"
+          className="w-full p-2 border border-gray-300 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
         />
-      </label>
+      </div>
+
       <button
         type="submit"
         disabled={loading}
@@ -57,6 +65,11 @@ const LoginForm: React.FC = () => {
       >
         {loading ? "Logging in..." : "Login"}
       </button>
+
+      <p className="text-center text-sm">
+        Don't have an account?{" "}
+        <a href="/register" className="text-blue-600 hover:underline">Register</a>
+      </p>
     </form>
   );
 };

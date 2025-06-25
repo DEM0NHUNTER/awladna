@@ -40,3 +40,27 @@
 .read-the-docs {
   color: #888;
 }
+/* Glassmorphism Card */
+.login-card {
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Floating Label Animation */
+.floating-label {
+  position: relative;
+  margin-bottom: 2rem;
+}
+.floating-label input:focus ~ label,
+.floating-label input:not(:placeholder-shown) ~ label {
+  @apply text-xs -top-2 left-2 px-1 bg-white/10 rounded-md;
+  transition: 0.2s ease all;
+}
+
+/* Button Hover Effects */
+.btn-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}

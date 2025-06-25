@@ -1,139 +1,117 @@
-// src/pages/Profile.tsx
+// front_end/src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
-import axiosInstance from "../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-
-const defaultChild = {
-  name: "",
-  gender: "",
-  birth_date: "",
-  behavioral_patterns: {},
-  emotional_state: {},
-};
+import axiosInstance from "../api/axiosInstance";
+import ChildProfileForm from "../components/child/ChildProfileForm";
 
 const Profile: React.FC = () => {
-  const { user, loading } = useAuth();
-  const [child, setChild] = useState<any>(defaultChild);
-  const [childId, setChildId] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(true);  // always editable initially
-  const [status, setStatus] = useState<string | null>(null);
+  const { user, loading, getChildProfiles } = useAuth();
   const navigate = useNavigate();
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
 
-  // Always fetch existing profile (if any)
   useEffect(() => {
     if (!user) return;
-    axiosInstance.get("/auth/child")
-      .then(res => {
-        if (Array.isArray(res.data) && res.data.length > 0 && res.data[0]?.child_id) {
-          setChild(res.data[0]);
-          setChildId(res.data[0].child_id);
-          setIsEditing(true);
-        } else {
-          setChild(defaultChild);
-          setChildId(null);
-          setIsEditing(true);
-        }
-      })
-      .catch(() => {
-        setStatus("Failed to load child profile.");
-        setIsEditing(true);
-      });
+    fetchProfiles();
   }, [user]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChild({ ...child, [e.target.name]: e.target.value });
-  };
-
-  const handleSave = async () => {
-    setStatus(null);
-    const payload = {
-      name: child.name,
-      gender: child.gender,
-      birth_date: child.birth_date,
-      behavioral_patterns: child.behavioral_patterns || {},
-      emotional_state: child.emotional_state || {},
-    };
-
-    try {
-      if (childId) {
-        await axiosInstance.put(`/auth/child/${childId}`, payload);
-        setStatus("Child profile updated.");
-      } else {
-        const res = await axiosInstance.post("/auth/child/", payload);
-        setChild(res.data);
-        setChildId(res.data.child_id);
-        setStatus("Child profile created.");
-        navigate(`/chat/${res.data.child_id}`);
-      }
-      setIsEditing(false);
-    } catch (err) {
-      console.error(err);
-      setStatus("Error saving profile.");
-      setIsEditing(true);
+  const fetchProfiles = async () => {
+    const data = await getChildProfiles();
+    setProfiles(data);
+    if (data.length > 0 && !showForm) {
+      navigate('/chat');
     }
   };
 
+  const handleCreate = () => {
+    setEditingProfile(null);
+    setShowForm(true);
+  };
+
+  const handleEdit = (profile: any) => {
+    setEditingProfile(profile);
+    setShowForm(true);
+  };
+
+  const handleDelete = async (childId: number) => {
+    if (!window.confirm("Are you sure you want to delete this profile?")) return;
+
+    try {
+      await axiosInstance.delete(`/child-profiles/${childId}`);
+      fetchProfiles();
+    } catch (error) {
+      alert("Failed to delete profile");
+    }
+  };
+
+  const handleSave = async () => {
+    await fetchProfiles();
+    setShowForm(false);
+    setEditingProfile(null);
+  };
+
   if (loading) return <p>Loading...</p>;
-  if (!user) return <p>You must be logged in to view this page.</p>;
+  if (!user) return <p>Please log in</p>;
 
   return (
-    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
-      <h1 className="text-2xl font-bold mb-4">Child Profile</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Your Profile</h1>
 
-      {status && <p className="mb-4 text-blue-600">{status}</p>}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Child Profiles</h2>
 
-      <label className="block mb-3">
-        Name:
-        <input
-          name="name"
-          value={child.name}
-          onChange={handleChange}
-          disabled={!isEditing}
-          className="w-full border p-2 rounded mt-1"
-        />
-      </label>
-
-      <label className="block mb-3">
-        Gender:
-        <input
-          name="gender"
-          value={child.gender}
-          onChange={handleChange}
-          disabled={!isEditing}
-          className="w-full border p-2 rounded mt-1"
-        />
-      </label>
-
-      <label className="block mb-3">
-        Birth Date:
-        <input
-          name="birth_date"
-          type="date"
-          value={child.birth_date?.slice(0, 10) || ""}
-          onChange={handleChange}
-          disabled={!isEditing}
-          className="w-full border p-2 rounded mt-1"
-        />
-      </label>
-
-      <div className="mt-4 space-x-4">
-        {isEditing ? (
-          <button
-            onClick={handleSave}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            Save
-          </button>
+        {profiles.length === 0 ? (
+          <p className="mb-4">You haven't created any child profiles yet.</p>
         ) : (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Edit
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {profiles.map(profile => (
+              <div key={profile.child_id} className="border p-4 rounded shadow">
+                <h3 className="font-bold">{profile.name}</h3>
+                <p>Age: {profile.age}</p>
+                <p>Gender: {profile.gender}</p>
+                <div className="mt-4 space-x-2">
+                  <button
+                    onClick={() => handleEdit(profile)}
+                    className="text-blue-500 hover:underline"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(profile.child_id)}
+                    className="text-red-500 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
+
+        <button
+          onClick={handleCreate}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+        >
+          {profiles.length === 0 ? "Create First Child Profile" : "Add New Child Profile"}
+        </button>
       </div>
+
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">
+              {editingProfile ? "Edit Child Profile" : "Create New Child Profile"}
+            </h2>
+            <ChildProfileForm
+              profile={editingProfile}
+              onSave={handleSave}
+              onCancel={() => setShowForm(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -2,10 +2,11 @@
 import React from "react";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
-
 import ErrorBoundary from "./components/ErrorBoundary";
+
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,9 +16,11 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
-import ChildProfilePage from "./pages/Profile";
 
-// Guest and Protected Route Wrappers
+// Optional child profile page route (you can customize or remove)
+import ChildProfilePage from "./pages/Profile"; // or `./pages/ChildProfile` if you separate it
+
+// Guest-only route guard
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -25,6 +28,7 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Protected-only route guard
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -41,23 +45,26 @@ const App: React.FC = () => {
           <Header />
           <main className="flex-grow bg-gray-50 p-4">
             <Routes>
-              {/* Public Routes */}
+              {/* Public (guest-only) routes */}
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/home" element={<GuestRoute><Home /></GuestRoute>} />
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
+
+              {/* Open routes (accessible to both guest and logged-in) */}
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
-              {/* Protected Routes */}
+              {/* Protected routes */}
               <Route element={<ProtectedRoute />}>
+                <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/Chat" element={<Chat />} />
+                <Route path="/chat" element={<Chat />} />
                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} />
               </Route>
 
-              {/* Fallback for unknown routes */}
+              {/* Catch-all fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
