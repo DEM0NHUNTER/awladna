@@ -31,56 +31,55 @@ const ChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Redirect if invalid childId
+  // Redirect if no valid childId
   if (!childId || isNaN(childIdNum)) {
     return <Navigate to="/profile" replace />;
   }
 
-  // Scroll to bottom when messages update
+  // Scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Load child profile
+  // Load child profile once
   useEffect(() => {
     const fetchChildInfo = async () => {
       try {
         const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
         setChildInfo(res.data);
-      } catch (err: any) {
-        console.error('Failed to fetch child info:', err.response?.data ?? err);
+      } catch (err) {
+        console.error('Failed to fetch child info', err);
       }
     };
     fetchChildInfo();
   }, [childIdNum]);
 
-  // Poll chat history every 3 seconds
+  // Poll chat history (optional; you can disable this block if you want)
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchMessages = async () => {
+    const fetchHistory = async () => {
       try {
         const res = await axiosInstance.get(`/auth/chat/${childIdNum}/history?limit=50`, {
           signal: controller.signal,
         });
-        const data = res.data as any[];
         setMessages(
-          data.map((item) => ({
+          res.data.map((item: any) => ({
             id: item.timestamp ?? Math.random().toString(),
-            text: item.ai_response ?? item.user_input,
+            text: item.chatbot_response ?? item.user_input,
             fromChild: Boolean(item.user_input),
           }))
         );
-      } catch (err: any) {
+      } catch (err) {
         if (!axios.isCancel(err)) {
-          console.error('Failed to load chat history:', err.response?.data ?? err);
+          console.error('History load error', err);
           setError('Failed to load chat history.');
         }
       }
     };
 
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    fetchHistory();
+    const interval = setInterval(fetchHistory, 3000);
     return () => {
       clearInterval(interval);
       controller.abort();
@@ -96,7 +95,6 @@ const ChatPage: React.FC = () => {
       text: input,
       fromChild: true,
     };
-
     setMessages((prev) => [...prev, tempMessage]);
     setInput('');
     setIsLoading(true);
@@ -104,18 +102,21 @@ const ChatPage: React.FC = () => {
 
     try {
       const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
+        child_id: childIdNum,
         message: tempMessage.text,
       });
-
       const aiMessage: Message = {
         id: Date.now().toString() + '-ai',
         text: res.data.response,
         fromChild: false,
       };
-
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err: any) {
-      console.error('Failed to send message:', err.response?.data ?? err);
+      console.error('Failed to send message:', err);
+      // If this was a validation error, dump the Pydantic details:
+      if (axios.isAxiosError(err) && err.response) {
+        console.error('Server validation error:', err.response.data);
+      }
       setError('Failed to send message.');
     } finally {
       setIsLoading(false);
@@ -127,15 +128,17 @@ const ChatPage: React.FC = () => {
       <Sidebar childId={childIdNum.toString()} />
 
       <div className="flex flex-col flex-1">
-        <header className="bg-white shadow px-6 py-4">
-          <h2 className="text-xl font-semibold">
-            Chat with AI{user?.email ? ` — ${user.email}` : ''}
-          </h2>
-          {childInfo && (
-            <p className="text-sm text-gray-600">
-              Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
-            </p>
-          )}
+        <header className="bg-white shadow px-6 py-4 flex justify-between">
+          <div>
+            <h2 className="text-xl font-semibold">
+              Chat with AI{user?.email ? ` — ${user.email}` : ''}
+            </h2>
+            {childInfo && (
+              <p className="text-sm text-gray-600">
+                Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
+              </p>
+            )}
+          </div>
         </header>
 
         {error && <div className="text-red-600 p-4">{error}</div>}
