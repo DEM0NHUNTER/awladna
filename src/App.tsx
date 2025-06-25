@@ -16,8 +16,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
-
-// Optional child profile page route (you can customize or remove)
 import ChildProfilePage from "./pages/Profile"; // or `./pages/ChildProfile` if you separate it
 
 // Guest-only route guard
@@ -61,7 +59,7 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/chat" element={<Chat />} />
-                <Route path="/child-profiles/:childId" element={<ChildProfilePage />} />
+{/*                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} /> */}
               </Route>
 
               {/* Catch-all fallback */}
