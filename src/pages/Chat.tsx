@@ -55,40 +55,24 @@ const ChatPage: React.FC = () => {
 
   // Send a new message
   const sendMessage = async () => {
-    if (!input.trim()) return;
-
-    const tempMessage: Message = {
-      id: Date.now().toString(),
-      text: input,
-      fromChild: true,
-    };
-    setMessages((prev) => [...prev, tempMessage]);
-    setInput('');
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
-        child_id: childIdNum,
-        message: tempMessage.text,
-      });
-
-      const aiMessage: Message = {
-        id: Date.now().toString() + '-ai',
-        text: res.data.response,
-        fromChild: false,
-      };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (err: any) {
-      console.error('Failed to send message:', err);
-      if (axiosInstance.isAxiosError?.(err) && err.response) {
-        console.error('Server validation error:', err.response.data);
+      if (!input.trim()) return;
+      const text = input;
+      setMessages((m) => [...m, { id: Date.now().toString(), text, fromUser: true }]);
+      setInput('');
+      setIsLoading(true);
+      try {
+        const res = await axiosInstance.post('/auth/chat', {
+          child_id: childIdNum,
+          message: text,
+        });
+        setMessages((m) => [...m, { id: `${Date.now()}-ai`, text: res.data.response, fromUser: false }]);
+      } catch (err: any) {
+        console.error('Send error', err.response?.data ?? err);
+        setError('Failed to send message.');
+      } finally {
+        setIsLoading(false);
       }
-      setError('Failed to send message.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
   return (
     <div className="flex h-screen bg-gray-100">
