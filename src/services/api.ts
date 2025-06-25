@@ -33,7 +33,7 @@ export const sendMessage = async (token: string, message: string, childId: numbe
 
 export const getChatHistory = async (token: string, childId: number) => {
   setAuthToken(token)
-  const response = await apiClient.get(`/chat/history/${childId}`)
+  const response = await apiClient.get(`/chat/${childId}/history`)
   return response.data
 }
 

@@ -63,7 +63,7 @@ const ChatPage: React.FC = () => {
 
     const fetchMessages = async () => {
       try {
-        const res = await axiosInstance.get(`/auth/chat/history/${childIdNum}?limit=100`, {
+        const res = await axiosInstance.get(`/auth/chat/${childId}/history?limit=100`, {
           signal: controller.signal,
         });
         const data = res.data as any[];
