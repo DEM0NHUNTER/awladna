@@ -9,7 +9,7 @@ import Sidebar from '@/components/layout/Sidebar';
 interface Message {
   id: string;
   text: string;
-  fromChild: boolean;
+  fromUser: boolean;
 }
 
 interface ChildProfile {
@@ -46,8 +46,9 @@ const ChatPage: React.FC = () => {
       try {
         const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
         setChildInfo(res.data);
-      } catch (err) {
-        console.error('Failed to fetch child info', err);
+      } catch (err: any) {
+        console.error('Failed to fetch child info', err.response?.data ?? err);
+        setError('Could not load child profile.');
       }
     };
     fetchChildInfo();
@@ -55,24 +56,31 @@ const ChatPage: React.FC = () => {
 
   // Send a new message
   const sendMessage = async () => {
-      if (!input.trim()) return;
-      const text = input;
-      setMessages((m) => [...m, { id: Date.now().toString(), text, fromUser: true }]);
-      setInput('');
-      setIsLoading(true);
-      try {
-        const res = await axiosInstance.post('/auth/chat', {
-          child_id: childIdNum,
-          message: text,
-        });
-        setMessages((m) => [...m, { id: `${Date.now()}-ai`, text: res.data.response, fromUser: false }]);
-      } catch (err: any) {
-        console.error('Send error', err.response?.data ?? err);
-        setError('Failed to send message.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (!input.trim()) return;
+    const text = input;
+    // add user's message
+    setMessages((m) => [...m, { id: Date.now().toString(), text, fromUser: true }]);
+    setInput('');
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      const res = await axiosInstance.post('/auth/chat', {
+        child_id: childIdNum,
+        message: text,
+      });
+      // add AI's reply
+      setMessages((m) => [
+        ...m,
+        { id: `${Date.now()}-ai`, text: res.data.response, fromUser: false },
+      ]);
+    } catch (err: any) {
+      console.error('Send error', err.response?.data ?? err);
+      setError('Failed to send message.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -86,7 +94,8 @@ const ChatPage: React.FC = () => {
             </h2>
             {childInfo && (
               <p className="text-sm text-gray-600">
-                Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
+                Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender},{' '}
+                {childInfo.age}y)
               </p>
             )}
           </div>
@@ -96,10 +105,13 @@ const ChatPage: React.FC = () => {
 
         <div className="flex-1 overflow-auto p-6 space-y-4 bg-gray-50">
           {messages.map((m) => (
-            <div key={m.id} className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}>
+            <div
+              key={m.id}
+              className={`flex ${m.fromUser ? 'justify-end' : 'justify-start'}`}
+            >
               <div
                 className={`max-w-xs px-4 py-2 rounded-xl shadow ${
-                  m.fromChild
+                  m.fromUser
                     ? 'bg-blue-600 text-white rounded-br-none'
                     : 'bg-white text-gray-800 rounded-bl-none'
                 }`}
@@ -108,6 +120,7 @@ const ChatPage: React.FC = () => {
               </div>
             </div>
           ))}
+
           {isLoading && (
             <div className="flex justify-start">
               <div className="max-w-xs px-4 py-2 rounded-xl shadow bg-white text-gray-800 rounded-bl-none animate-pulse">
@@ -115,6 +128,7 @@ const ChatPage: React.FC = () => {
               </div>
             </div>
           )}
+
           <div ref={messagesEndRef} />
         </div>
 
