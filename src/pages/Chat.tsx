@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axiosInstance from '@/api/axiosInstance';
+
 import Sidebar from '@/components/layout/Sidebar';
 
 interface Message {
@@ -29,17 +30,17 @@ const ChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Redirect if childId is invalid
+  // Redirect if childId invalid
   if (!childId || isNaN(childIdNum)) {
     return <Navigate to="/profile" replace />;
   }
 
-  // Scroll to bottom on new messages
+  // Keep view scrolled to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch child profile info
+  // Fetch child info once
   useEffect(() => {
     const fetchChildInfo = async () => {
       try {
@@ -50,39 +51,35 @@ const ChatPage: React.FC = () => {
         setError('Failed to load child profile.');
       }
     };
-
     fetchChildInfo();
   }, [childIdNum]);
 
-  // Send message to AI
+  // Send message handler
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const tempMessage: Message = {
+    const userMsg: Message = {
       id: Date.now().toString(),
       text: input,
       fromChild: true,
     };
-
-    setMessages((prev) => [...prev, tempMessage]);
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
 
     try {
       const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
-        user_input: tempMessage.text,
+        user_input: userMsg.text,
       });
-
-      const aiMessage: Message = {
+      const aiMsg: Message = {
         id: Date.now().toString() + '-ai',
         text: res.data.response,
         fromChild: false,
       };
-
-      setMessages((prev) => [...prev, aiMessage]);
+      setMessages(prev => [...prev, aiMsg]);
     } catch (err) {
       console.error(err);
-      setError('AI failed to respond. Try again.');
+      setError('Failed to get AI response.');
     } finally {
       setIsLoading(false);
     }
@@ -94,22 +91,20 @@ const ChatPage: React.FC = () => {
 
       <div className="flex flex-col flex-1">
         <header className="bg-white shadow px-6 py-4 flex justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">
-              Chat with AI{user?.email ? ` — ${user.email}` : ''}
-            </h2>
-            {childInfo && (
-              <p className="text-sm text-gray-600">
-                Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
-              </p>
-            )}
-          </div>
+          <h2 className="text-xl font-semibold">
+            Chat with AI{user?.email ? ` — ${user.email}` : ''}
+          </h2>
+          {childInfo && (
+            <p className="text-sm text-gray-600">
+              Talking about: <strong>{childInfo.name}</strong> ({childInfo.gender}, {childInfo.age}y)
+            </p>
+          )}
         </header>
 
         {error && <div className="text-red-600 p-4">{error}</div>}
 
         <div className="flex-1 overflow-auto p-6 space-y-4 bg-gray-50">
-          {messages.map((m) => (
+          {messages.map(m => (
             <div key={m.id} className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-xs px-4 py-2 rounded-xl shadow ${
@@ -136,10 +131,10 @@ const ChatPage: React.FC = () => {
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={e => setInput(e.target.value)}
             placeholder="Type your message…"
             className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+            onKeyDown={e => (e.key === 'Enter' ? sendMessage() : null)}
           />
           <button
             onClick={sendMessage}
@@ -154,4 +149,4 @@ const ChatPage: React.FC = () => {
   );
 };
 
-export default Chat;
+export default ChatPage;
