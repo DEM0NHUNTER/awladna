@@ -2,6 +2,15 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axiosInstance from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 
+// Types from your backend schema
+interface ChildProfileResponse {
+  child_id: number;
+  name: string;
+  age: number;
+  gender: string;
+  created_at: string;
+}
+
 interface User {
   id: number;
   email: string;
@@ -18,12 +27,14 @@ interface AuthContextType {
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  children: ChildProfileResponse[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [children, setChildren] = useState<ChildProfileResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
 
@@ -31,41 +42,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await axiosInstance.get("/auth/me");
       setUser(response.data);
-    } catch {
+      return response.data;
+    } catch (error) {
       setUser(null);
-    } finally {
-      setLoading(false);
+      return null;
+    }
+  };
+
+  const fetchChildren = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/child");
+      setChildren(res.data);
+      return res.data;
+    } catch (error) {
+      setChildren([]);
+      return [];
     }
   };
 
   const login = async (email: string, password: string) => {
-      try {
-        const response = await axiosInstance.post("/auth/login", { email, password });
-        const { access_token } = response.data;
-        localStorage.setItem("access_token", access_token);
+    try {
+      const response = await axiosInstance.post("/auth/login", { email, password });
+      const { access_token } = response.data;
+      localStorage.setItem("access_token", access_token);
 
-        await refreshUser();  // fetch current user
+      // Refresh user and fetch children in parallel
+      const [userData, childrenData] = await Promise.all([
+        refreshUser(),
+        fetchChildren()
+      ]);
 
-        if (!response.data.is_verified) {
-          navigate("/verify-email");
-          return;
-        }
+      const currentUser = userData || user;
+      const currentChildren = childrenData || children;
 
-        // Check if user has child profiles
-        const childrenRes = await axiosInstance.get("/auth/child");
-        const children = Array.isArray(childrenRes.data) ? childrenRes.data : [];
-
-        if (children.length > 0 && children[0]?.child_id) {
-          const firstChildId = children[0].child_id;
-          navigate(`/chat/${firstChildId}`);
-        } else {
-          navigate("/profile");
-        }
-      } catch (error: any) {
-        console.error("Login error", error);
-        throw new Error(error.response?.data?.detail || "Login failed");
+      if (!currentUser?.is_verified) {
+        navigate("/verify-email");
+        return;
       }
-    };
+
+      // Navigate based on children existence
+      if (currentChildren.length > 0) {
+        navigate(`/chat/${currentChildren[0].child_id}`);
+      } else {
+        navigate("/profile");
+      }
+    } catch (error: any) {
+      console.error("Login error", error);
+      throw new Error(error.response?.data?.detail || "Login failed");
+    }
+  };
 
   const register = async (email: string, password: string, name?: string) => {
     try {
@@ -84,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       localStorage.removeItem("access_token");
       setUser(null);
+      setChildren([]);
       navigate("/");
     }
   };
@@ -93,10 +119,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = localStorage.getItem("access_token");
       if (token) {
         try {
-          await refreshUser();
-        } catch {
+          await Promise.all([
+            refreshUser(),
+            fetchChildren()
+          ]);
+        } catch (error) {
           localStorage.removeItem("access_token");
           setUser(null);
+          setChildren([]);
         }
       }
       setLoading(false);
@@ -104,7 +134,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
   }, []);
 
-  const value = { user, loading, login, register, logout, refreshUser };
+  const value = {
+    user,
+    loading,
+    login,
+    register,
+    logout,
+    refreshUser,
+    children
+  };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };

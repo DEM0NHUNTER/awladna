@@ -1,35 +1,30 @@
+// hooks/useRequireChildProfiles.ts
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 
-// Add an optional `required` parameter to control redirect behavior
-export const useRequireChildProfiles = (required: boolean = false) => {
-  const [profiles, setProfiles] = useState<any[] | null>(null);
+export const useRequireChildProfiles = () => {
+  const [profiles, setProfiles] = useState<ChildProfileResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProfiles = async () => {
+    const checkAndFetch = async () => {
       try {
         const res = await axiosInstance.get("/auth/child");
         setProfiles(res.data);
-        // Only redirect when explicitly required
-        if (required && Array.isArray(res.data) && res.data.length === 0) {
-          navigate("/profile");
+        if (res.data.length === 0) {
+          navigate("/profile", { replace: true });
         }
-      } catch (err) {
-        if (required) {
-          navigate("/profile");
-        } else {
-          setProfiles([]);
-        }
+      } catch (error) {
+        console.error("Failed to fetch profiles:", error);
+        navigate("/profile", { replace: true });
       } finally {
         setLoading(false);
       }
     };
-
-    fetchProfiles();
-  }, [required, navigate]);
+    checkAndFetch();
+  }, [navigate]);
 
   return { profiles, loading };
 };
