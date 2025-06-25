@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const profiles = await getChildProfiles();
       if (profiles.length > 0) {
-        navigate(`/auth/chat/${profiles[0].id}`);
+        navigate(`/auth/chat/${profiles[0].child_id}`);
       } else {
         navigate("/profile");
       }

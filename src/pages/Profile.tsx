@@ -19,16 +19,21 @@ const Profile: React.FC = () => {
     if (user) fetchProfiles();
   }, [user]);
 
-  const fetchProfiles = async () => {
-    try {
-      const res = await axiosInstance.get("/auth/child/");
-      setProfiles(res.data);
-      setFetchError(null);
-    } catch (err) {
-      console.error("Profile fetch error:", err);
-      setFetchError("Failed to load child profiles. Please try again later.");
-    }
-  };
+    const fetchProfiles = async () => {
+      try {
+        const res = await axiosInstance.get('/auth/child/');
+        setProfiles(res.data);
+        setFetchError(null);
+      } catch (error: any) {
+        if (error.response?.status === 401) {
+          setFetchError("Session expired. Please log in again.");
+          // Optionally redirect to login
+        } else {
+          setFetchError("Failed to load child profiles. Please try again later.");
+        }
+        console.error("Profile fetch error:", error);
+      }
+    };
 
   const handleCreate = () => {
     setEditingProfile(null);

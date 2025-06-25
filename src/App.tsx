@@ -20,9 +20,16 @@ import ChildProfilePage from "./pages/Profile"; // or `./pages/ChildProfile` if 
 
 // Guest-only route guard
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, childProfiles } = useAuth();
+
   if (loading) return <div>Loading...</div>;
-  if (user) return <Navigate to="/chat" replace />;
+  if (user) {
+    if (childProfiles.length > 0) {
+      return <Navigate to={`/chat/${childProfiles[0].child_id}`} replace />;
+    } else {
+      return <Navigate to="/profile" replace />;
+    }
+  }
   return <>{children}</>;
 };
 
