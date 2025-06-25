@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
   useEffect(() => {
     const fetchChildren = async () => {
       try {
-        const res = await axiosInstance.get("/auth/child");
+        const res = await axiosInstance.get("/auth/child/");
         setChildren(res.data);
       } catch (err) {
         console.error("Failed to load child profiles", err);
