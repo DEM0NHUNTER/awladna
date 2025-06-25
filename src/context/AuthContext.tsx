@@ -39,24 +39,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await axiosInstance.post("/auth/login", { email, password });
-      const { access_token } = response.data;
-      localStorage.setItem("access_token", access_token);
+      try {
+        const response = await axiosInstance.post("/auth/login", { email, password });
+        const { access_token } = response.data;
+        localStorage.setItem("access_token", access_token);
 
-      await refreshUser();
+        await refreshUser();  // fetch current user
 
-      if (!response.data.is_verified) {
-        navigate("/verify-email");
-        return;
+        if (!response.data.is_verified) {
+          navigate("/verify-email");
+          return;
+        }
+
+        // Check if user has child profiles
+        const childrenRes = await axiosInstance.get("/auth/child");
+        const children = Array.isArray(childrenRes.data) ? childrenRes.data : [];
+
+        if (children.length > 0 && children[0]?.child_id) {
+          const firstChildId = children[0].child_id;
+          navigate(`/chat/${firstChildId}`);
+        } else {
+          navigate("/profile");
+        }
+      } catch (error: any) {
+        console.error("Login error", error);
+        throw new Error(error.response?.data?.detail || "Login failed");
       }
-
-      navigate("/chat");
-    } catch (error: any) {
-      console.error("Login error", error);
-      throw new Error(error.response?.data?.detail || "Login failed");
-    }
-  };
+    };
 
   const register = async (email: string, password: string, name?: string) => {
     try {
