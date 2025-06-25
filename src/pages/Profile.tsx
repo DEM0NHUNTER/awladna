@@ -39,7 +39,7 @@ const Profile: React.FC = () => {
     if (!window.confirm("Are you sure you want to delete this profile?")) return;
 
     try {
-      await axiosInstance.delete(`/child-profiles/${childId}`);
+      await axiosInstance.delete(`/child/${childId}`);
       fetchProfiles();
     } catch (error) {
       alert("Failed to delete profile");

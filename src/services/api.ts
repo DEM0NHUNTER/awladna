@@ -40,12 +40,12 @@ export const getChatHistory = async (token: string, childId: number) => {
 // Child profile endpoints
 export const getChildProfiles = async (token: string) => {
   setAuthToken(token)
-  const response = await apiClient.get('/child-profiles')
+  const response = await apiClient.get('/child')
   return response.data
 }
 
 export const createChildProfile = async (token: string, data: any) => {
   setAuthToken(token)
-  const response = await apiClient.post('/child-profiles', data)
+  const response = await apiClient.post('/child', data)
   return response.data
 }

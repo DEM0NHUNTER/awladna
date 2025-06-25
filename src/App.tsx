@@ -50,7 +50,7 @@ const App: React.FC = () => {
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
               {/* Open routes (accessible to both guest and logged-in) */}
-              <Route path="/verify-email" element={<VerifyEmail />} />
+{/*               <Route path="/verify-email" element={<VerifyEmail />} /> */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
