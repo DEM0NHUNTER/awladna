@@ -32,11 +32,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children: AppChildren }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [children, setChildren] = useState<ChildProfileResponse[]>([]);
+  const [childProfiles, setChildProfiles] = useState<ChildProfileResponse[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const navigate = useNavigate();
+    const [children, setChildren] = useState<ChildProfileResponse[]>([]);
 
   const refreshUser = async () => {
     try {
@@ -141,10 +142,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     register,
     logout,
     refreshUser,
-    children
+    children: childProfiles // use renamed state
   };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && <AppChildren />}
+    </AuthContext.Provider>
 };
 
 export const useAuth = () => {

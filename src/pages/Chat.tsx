@@ -18,7 +18,6 @@ interface ChildProfile {
   age: number;
   gender: string;
 }
-
 const ChatPage: React.FC = () => {
   const { childId } = useParams<{ childId: string }>();
   const childIdNum = Number(childId);
