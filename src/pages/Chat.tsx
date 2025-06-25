@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axiosInstance from '@/api/axiosInstance';
+import axios from 'axios';
 
 import Sidebar from '@/components/layout/Sidebar';
 
@@ -30,56 +31,92 @@ const ChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Redirect if childId invalid
+  // Redirect if invalid childId
   if (!childId || isNaN(childIdNum)) {
     return <Navigate to="/profile" replace />;
   }
 
-  // Keep view scrolled to bottom
+  // Scroll to bottom when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch child info once
+  // Load child profile
   useEffect(() => {
     const fetchChildInfo = async () => {
       try {
         const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
         setChildInfo(res.data);
-      } catch (err) {
-        console.error('Failed to fetch child info', err);
-        setError('Failed to load child profile.');
+      } catch (err: any) {
+        console.error('Failed to fetch child info:', err.response?.data ?? err);
       }
     };
     fetchChildInfo();
   }, [childIdNum]);
 
-  // Send message handler
+  // Poll chat history every 3 seconds
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchMessages = async () => {
+      try {
+        const res = await axiosInstance.get(`/auth/chat/${childIdNum}/history?limit=50`, {
+          signal: controller.signal,
+        });
+        const data = res.data as any[];
+        setMessages(
+          data.map((item) => ({
+            id: item.timestamp ?? Math.random().toString(),
+            text: item.ai_response ?? item.user_input,
+            fromChild: Boolean(item.user_input),
+          }))
+        );
+      } catch (err: any) {
+        if (!axios.isCancel(err)) {
+          console.error('Failed to load chat history:', err.response?.data ?? err);
+          setError('Failed to load chat history.');
+        }
+      }
+    };
+
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
+  }, [childIdNum]);
+
+  // Send a new message
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    const userMsg: Message = {
+    const tempMessage: Message = {
       id: Date.now().toString(),
       text: input,
       fromChild: true,
     };
-    setMessages(prev => [...prev, userMsg]);
+
+    setMessages((prev) => [...prev, tempMessage]);
     setInput('');
     setIsLoading(true);
+    setError(null);
 
     try {
       const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
-        user_input: userMsg.text,
+        user_input: tempMessage.text,
       });
-      const aiMsg: Message = {
+
+      const aiMessage: Message = {
         id: Date.now().toString() + '-ai',
         text: res.data.response,
         fromChild: false,
       };
-      setMessages(prev => [...prev, aiMsg]);
-    } catch (err) {
-      console.error(err);
-      setError('Failed to get AI response.');
+
+      setMessages((prev) => [...prev, aiMessage]);
+    } catch (err: any) {
+      console.error('Failed to send message:', err.response?.data ?? err);
+      setError('Failed to send message.');
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +127,7 @@ const ChatPage: React.FC = () => {
       <Sidebar childId={childIdNum.toString()} />
 
       <div className="flex flex-col flex-1">
-        <header className="bg-white shadow px-6 py-4 flex justify-between">
+        <header className="bg-white shadow px-6 py-4">
           <h2 className="text-xl font-semibold">
             Chat with AI{user?.email ? ` — ${user.email}` : ''}
           </h2>
@@ -104,7 +141,7 @@ const ChatPage: React.FC = () => {
         {error && <div className="text-red-600 p-4">{error}</div>}
 
         <div className="flex-1 overflow-auto p-6 space-y-4 bg-gray-50">
-          {messages.map(m => (
+          {messages.map((m) => (
             <div key={m.id} className={`flex ${m.fromChild ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`max-w-xs px-4 py-2 rounded-xl shadow ${
@@ -131,14 +168,14 @@ const ChatPage: React.FC = () => {
           <input
             type="text"
             value={input}
-            onChange={e => setInput(e.target.value)}
+            onChange={(e) => setInput(e.target.value)}
             placeholder="Type your message…"
             className="flex-1 border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onKeyDown={e => (e.key === 'Enter' ? sendMessage() : null)}
+            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
           />
           <button
             onClick={sendMessage}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isLoading}
             className="px-6 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 disabled:opacity-50"
           >
             Send
