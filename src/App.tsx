@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ThemeToggle from "./components/ThemeToggle"; // ✅ Theme toggle
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -16,11 +17,9 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
+import ChildProfilePage from "./pages/Profile"; // Optional route
 
-// Optional child profile page route (you can customize or remove)
-import ChildProfilePage from "./pages/Profile"; // or `./pages/ChildProfile` if you separate it
-
-// Guest-only route guard
+// 👤 Guest-only route wrapper
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -28,7 +27,7 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Protected-only route guard
+// 🔐 Authenticated-only route wrapper
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -36,14 +35,17 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
-// Main App Component
 const App: React.FC = () => {
   return (
     <AuthProvider>
       <ErrorBoundary>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-grow bg-gray-50 p-4">
+        <div className="flex flex-col min-h-screen bg-light-bg dark:bg-dark-bg text-light-text dark:text-dark-text transition-colors duration-300">
+          <header className="p-4 flex justify-between items-center">
+            <Header />
+            <ThemeToggle /> {/* 🌓 Theme switcher in the header */}
+          </header>
+
+          <main className="flex-grow p-4 bg-gray-50 dark:bg-gray-900">
             <Routes>
               {/* Public (guest-only) routes */}
               <Route path="/" element={<GuestRoute><Home /></GuestRoute>} />
@@ -51,12 +53,12 @@ const App: React.FC = () => {
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-              {/* Open routes (accessible to both guest and logged-in) */}
+              {/* Semi-public routes */}
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
-              {/* Protected routes */}
+              {/* Authenticated-only routes */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
@@ -68,6 +70,7 @@ const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
+
           <Footer />
         </div>
       </ErrorBoundary>

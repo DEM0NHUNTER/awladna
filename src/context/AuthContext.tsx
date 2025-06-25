@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const getChildProfiles = async () => {
     try {
-      const res = await axiosInstance.get("/auth/child");
+      const res = await axiosInstance.get("/auth/child-profiles");
       setChildProfiles(res.data);
       return res.data;
     } catch {
