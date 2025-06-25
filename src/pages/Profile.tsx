@@ -1,4 +1,3 @@
-// front_end/src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -6,11 +5,13 @@ import axiosInstance from "../api/axiosInstance";
 import ChildProfileForm from "../components/child/ChildProfileForm";
 
 const Profile: React.FC = () => {
-  const { user, loading, getChildProfiles } = useAuth();
+  const { user, loading: authLoading, getChildProfiles } = useAuth();
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -18,10 +19,14 @@ const Profile: React.FC = () => {
   }, [user]);
 
   const fetchProfiles = async () => {
-    const data = await getChildProfiles();
-    setProfiles(data);
-    if (data.length > 0 && !showForm) {
-      navigate('/chat');
+    try {
+      // Use the correct path as defined in backend routes
+      const res = await axiosInstance.get('child');
+      setProfiles(res.data);
+      setFetchError(null);
+    } catch (error) {
+      setFetchError("Failed to load child profiles. Please try again later.");
+      console.error("Profile fetch error:", error);
     }
   };
 
@@ -37,12 +42,16 @@ const Profile: React.FC = () => {
 
   const handleDelete = async (childId: number) => {
     if (!window.confirm("Are you sure you want to delete this profile?")) return;
+    setDeletingId(childId);
 
     try {
-      await axiosInstance.delete(`/child/${childId}`);
+      // Use the correct path as defined in backend routes
+      await axiosInstance.delete(`child/${childId}`);
       fetchProfiles();
     } catch (error) {
       alert("Failed to delete profile");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -52,7 +61,7 @@ const Profile: React.FC = () => {
     setEditingProfile(null);
   };
 
-  if (loading) return <p>Loading...</p>;
+  if (authLoading) return <p>Loading...</p>;
   if (!user) return <p>Please log in</p>;
 
   return (
@@ -61,6 +70,12 @@ const Profile: React.FC = () => {
 
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Child Profiles</h2>
+
+        {fetchError && (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 mb-4">
+            {fetchError}
+          </div>
+        )}
 
         {profiles.length === 0 ? (
           <p className="mb-4">You haven't created any child profiles yet.</p>
@@ -75,14 +90,16 @@ const Profile: React.FC = () => {
                   <button
                     onClick={() => handleEdit(profile)}
                     className="text-blue-500 hover:underline"
+                    disabled={showForm}
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(profile.child_id)}
                     className="text-red-500 hover:underline"
+                    disabled={deletingId === profile.child_id}
                   >
-                    Delete
+                    {deletingId === profile.child_id ? 'Deleting...' : 'Delete'}
                   </button>
                 </div>
               </div>
@@ -93,9 +110,20 @@ const Profile: React.FC = () => {
         <button
           onClick={handleCreate}
           className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          disabled={showForm}
         >
           {profiles.length === 0 ? "Create First Child Profile" : "Add New Child Profile"}
         </button>
+
+        {/* Allow access to chat without redirect */}
+        {profiles.length > 0 && (
+          <button
+            onClick={() => navigate('/chat')}
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Go to Chat
+          </button>
+        )}
       </div>
 
       {showForm && (

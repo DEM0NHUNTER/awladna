@@ -58,7 +58,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const res = await axiosInstance.get("/auth/child");
       setChildProfiles(res.data);
       return res.data;
-    } catch {
+    } catch (error) {
+      console.error("Failed to fetch child profiles:", error);
       return [];
     }
   };
@@ -71,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await refreshUser();
 
       if (!res.data.is_verified) {
-        navigate("/verify-email");
+//         navigate("/verify-email");
         return;
       }
 
