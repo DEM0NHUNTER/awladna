@@ -1,7 +1,14 @@
 module.exports = {
-  darkMode: 'class', // Enable class-based dark mode
+  content: ["./src/**/*.{tsx,ts,js,jsx}"],
   theme: {
-    extend: {},
+    extend: {
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+      },
+      backdropBlur: {
+        xs: "2px",
+      },
+    },
   },
   plugins: [],
 };
