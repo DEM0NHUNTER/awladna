@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const getChildProfiles = async () => {
     try {
-      const res = await axiosInstance.get("/auth/child-profiles");
+      const res = await axiosInstance.get("/auth/child");
       setChildProfiles(res.data);
       return res.data;
     } catch {
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const res = await axiosInstance.post("/auth/register", { email, password, name });
       const { access_token } = res.data;
       localStorage.setItem("access_token", access_token);
-      navigate("/verify-email");
+//       navigate("/verify-email");
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || "Registration failed");
     }
