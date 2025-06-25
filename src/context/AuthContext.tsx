@@ -64,29 +64,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const login = async (email: string, password: string) => {
-    try {
-      const res = await axiosInstance.post("/auth/login", { email, password });
-      const { access_token } = res.data;
-      localStorage.setItem("access_token", access_token);
-      await refreshUser();
+    const login = async (email: string, password: string) => {
+      try {
+        const res = await axiosInstance.post("/auth/login", { email, password });
+        const { access_token, refresh_token } = res.data;
 
-      if (!res.data.is_verified) {
-//         navigate("/verify-email");
-        return;
-      }
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("refresh_token", refresh_token);  // ✅ Store refresh token
 
-      const profiles = await getChildProfiles();
-      if (profiles.length > 0) {
-        navigate(`/auth/chat/${profiles[0].child_id}`);
-      } else {
-        navigate("/profile");
+        await refreshUser();
+
+        const profiles = await getChildProfiles();
+        if (profiles.length > 0) {
+          navigate(`/chat/${profiles[0].child_id}`);
+        } else {
+          navigate("/profile");
+        }
+      } catch (error: any) {
+        console.error("Login error", error);
+        throw new Error(error.response?.data?.detail || "Login failed");
       }
-    } catch (error: any) {
-      console.error("Login error", error);
-      throw new Error(error.response?.data?.detail || "Login failed");
-    }
-  };
+    };
 
   const register = async (email: string, password: string, name?: string) => {
     try {
@@ -108,6 +106,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setChildProfiles([]);
       navigate("/");
     }
+//       localStorage.removeItem("access_token");
+//       localStorage.removeItem("refresh_token");
+
   };
 
   useEffect(() => {

@@ -33,36 +33,32 @@ axiosInstance.interceptors.response.use(
     if (err.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      if (isRefreshing) {
-        return new Promise(function (resolve, reject) {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(token => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            return axiosInstance(originalRequest);
-          })
-          .catch(Promise.reject);
+      const refresh_token = localStorage.getItem("refresh_token");
+      if (!refresh_token) {
+        return Promise.reject(err);
       }
 
-      isRefreshing = true;
-
       try {
-        const res = await axiosInstance.post("/auth/refresh-token");
-        const newToken = res.data.access_token;
-        localStorage.setItem("access_token", newToken);
-        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newToken}`;
-        processQueue(null, newToken);
+        const res = await axiosInstance.post(
+          "/auth/refresh-token",
+          { refresh_token },  // ✅ Send refresh token in request body
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        const newAccessToken = res.data.access_token;
+        localStorage.setItem("access_token", newAccessToken);
+        axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosInstance(originalRequest);
-      } catch (err) {
-        processQueue(err, null);
-        return Promise.reject(err);
-      } finally {
-        isRefreshing = false;
+      } catch (refreshError) {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        return Promise.reject(refreshError);
       }
     }
 
     return Promise.reject(err);
   }
 );
-
 export default axiosInstance;
