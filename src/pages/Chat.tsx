@@ -3,10 +3,14 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axiosInstance from '@/api/axiosInstance';
+import axios from 'axios';
+
 import Sidebar from '@/components/layout/Sidebar';
 
 interface Message {
   id: string;
+  user_input?: string;
+  chatbot_response?: string;
   text: string;
   fromChild: boolean;
 }
@@ -29,7 +33,7 @@ const ChatPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Redirect if childId is invalid
+  // Guard: if childId is missing or invalid, redirect
   if (!childId || isNaN(childIdNum)) {
     return <Navigate to="/profile" replace />;
   }
@@ -47,14 +51,47 @@ const ChatPage: React.FC = () => {
         setChildInfo(res.data);
       } catch (err) {
         console.error('Failed to fetch child info', err);
-        setError('Failed to load child profile.');
       }
     };
 
     fetchChildInfo();
   }, [childIdNum]);
 
-  // Send message to AI
+  // Poll messages every 3s
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchMessages = async () => {
+      try {
+        const res = await axiosInstance.get(`/auth/chat/${childId}/history?limit=100`, {
+          signal: controller.signal,
+        });
+        const data = res.data as any[];
+        setMessages(
+          data.map((item) => ({
+            id: item.timestamp ?? Math.random().toString(),
+            text: item.ai_response ?? item.user_input,
+            fromChild: Boolean(item.user_input),
+          }))
+        );
+      } catch (err) {
+        if (!axios.isCancel(err)) {
+          console.error(err);
+          setError('Failed to load chat history.');
+        }
+      }
+    };
+
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 3000);
+
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
+  }, [childIdNum]);
+
+  // Send message
   const sendMessage = async () => {
     if (!input.trim()) return;
 
@@ -70,7 +107,7 @@ const ChatPage: React.FC = () => {
 
     try {
       const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
-        user_input: tempMessage.text,
+      user_input: tempMessage.text,
       });
 
       const aiMessage: Message = {
@@ -82,7 +119,7 @@ const ChatPage: React.FC = () => {
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err) {
       console.error(err);
-      setError('AI failed to respond. Try again.');
+      setError('Failed to send message.');
     } finally {
       setIsLoading(false);
     }
@@ -154,4 +191,4 @@ const ChatPage: React.FC = () => {
   );
 };
 
-export default Chat;
+export default ChatPage;
