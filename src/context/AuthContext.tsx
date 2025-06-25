@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         const { access_token, refresh_token } = res.data;
 
         localStorage.setItem("access_token", access_token);
-        localStorage.setItem("refresh_token", refresh_token);  // ✅ Store refresh token
+        localStorage.setItem("refresh_token", refresh_token);  // ✅ Save refresh token
 
         await refreshUser();
 
