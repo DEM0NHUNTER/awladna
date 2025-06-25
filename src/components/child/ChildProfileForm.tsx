@@ -41,9 +41,9 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
       };
 
       if (profile?.child_id) {
-        await axiosInstance.put(`/child/${profile.child_id}`, payload);
+        await axiosInstance.put(`/api/auth/child/${profile.child_id}`, payload);
       } else {
-        await axiosInstance.post("/child", payload);
+        await axiosInstance.post("/api/auth/child", payload);
       }
 
       onSave();
