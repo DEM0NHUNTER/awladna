@@ -18,39 +18,37 @@ interface ChildProfile {
   age: number;
   gender: string;
 }
+
 const ChatPage: React.FC = () => {
   const { childId } = useParams<{ childId: string }>();
   const childIdNum = Number(childId);
-  const { profiles, loading } = useRequireChildProfiles();
+  if (!childId || isNaN(childIdNum)) {
+      // Gracefully redirect to profile instead
+     return <Navigate to="/profile" replace />;
+  }
   const { user } = useAuth();
-  const [childInfo, setChildInfo] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [childInfo, setChildInfo] = useState<ChildProfile | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!loading && !profiles.some(p => p.child_id === childIdNum)) {
-      navigate('/profile', { replace: true });
-    }
-  }, [loading, profiles, childIdNum, navigate]);
 
-  useEffect(() => {
-    const fetchChildInfo = async () => {
-      try {
-        const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
-        setChildInfo(res.data);
-      } catch (err) {
-        console.error("Failed to fetch child info", err);
-        navigate('/profile', { replace: true });
-      }
-    };
-
-    if (childIdNum) {
+    if (!childId || isNaN(childIdNum)) return null;
+    useEffect(() => {
+      const fetchChildInfo = async () => {
+        try {
+          const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
+          setChildInfo(res.data);
+        } catch (err) {
+          console.error("Failed to fetch child info", err);
+        }
+      };
       fetchChildInfo();
-    }
-  }, [childIdNum]);
+    }, [childIdNum]);
     // Scroll to bottom on new messages
     useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
