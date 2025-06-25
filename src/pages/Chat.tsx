@@ -106,10 +106,9 @@ const ChatPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const res = await axiosInstance.post('/auth/chat', {
-        child_id: childIdNum,
-        message: tempMessage.text,
-        context: null,
+      const res = await axiosInstance.post(`/auth/chat/${childIdNum}`, {
+      user_input: tempMessage.text,
+      context: null
       });
 
       const aiMessage: Message = {
