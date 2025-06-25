@@ -70,7 +70,7 @@ const ChatPage: React.FC = () => {
         setMessages(
           data.map((item) => ({
             id: item.timestamp ?? Math.random().toString(),
-            text: item.chatbot_response ?? item.user_input,
+            text: item.ai_response ?? item.user_input,
             fromChild: Boolean(item.user_input),
           }))
         );
