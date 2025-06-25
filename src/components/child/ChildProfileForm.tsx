@@ -87,29 +87,8 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
         >
           <option value="male">Male</option>
           <option value="female">Female</option>
-          <option value="other">Other</option>
-          <option value="unspecified">Unspecified</option>
         </select>
       </div>
-
-      <div>
-        <label className="block mb-1">Behavioral Patterns (JSON)</label>
-        <textarea
-          value={behavioralPatterns}
-          onChange={(e) => setBehavioralPatterns(e.target.value)}
-          className="w-full p-2 border rounded font-mono h-32"
-        />
-      </div>
-
-      <div>
-        <label className="block mb-1">Emotional State (JSON)</label>
-        <textarea
-          value={emotionalState}
-          onChange={(e) => setEmotionalState(e.target.value)}
-          className="w-full p-2 border rounded font-mono h-32"
-        />
-      </div>
-
       <div className="flex justify-end space-x-2">
         <button
           type="button"
