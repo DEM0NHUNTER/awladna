@@ -34,22 +34,23 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       const refresh_token = localStorage.getItem("refresh_token");
-      if (!refresh_token) {
-        return Promise.reject(err);
-      }
+      if (!refresh_token) return Promise.reject(err);
 
       try {
-        const res = await axiosInstance.post(
-          "/auth/refresh-token",
-          { refresh_token },  // ✅ Send refresh token in request body
-          { headers: { "Content-Type": "application/json" } }
+        const res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
+          { refresh_token },
+          {
+            headers: { "Content-Type": "application/json" },
+            withCredentials: true
+          }
         );
 
         const newAccessToken = res.data.access_token;
         localStorage.setItem("access_token", newAccessToken);
         axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem("access_token");
@@ -61,4 +62,5 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(err);
   }
 );
+
 export default axiosInstance;
