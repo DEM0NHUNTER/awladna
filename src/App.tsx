@@ -58,7 +58,7 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/chat" element={<Chat />} />
+                <Route path="/chat/:childId"  element={<Chat />} />
 {/*                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} /> */}
               </Route>
 

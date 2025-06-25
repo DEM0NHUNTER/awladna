@@ -1,3 +1,4 @@
+// src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -5,8 +6,9 @@ import axiosInstance from "../api/axiosInstance";
 import ChildProfileForm from "../components/child/ChildProfileForm";
 
 const Profile: React.FC = () => {
-  const { user, loading: authLoading, getChildProfiles } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
   const [profiles, setProfiles] = useState<any[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState<any>(null);
@@ -14,19 +16,17 @@ const Profile: React.FC = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
-    fetchProfiles();
+    if (user) fetchProfiles();
   }, [user]);
 
   const fetchProfiles = async () => {
     try {
-      // Use the correct path as defined in backend routes
-      const res = await axiosInstance.get('/auth/child/');
+      const res = await axiosInstance.get("/auth/child/");
       setProfiles(res.data);
       setFetchError(null);
-    } catch (error) {
+    } catch (err) {
+      console.error("Profile fetch error:", err);
       setFetchError("Failed to load child profiles. Please try again later.");
-      console.error("Profile fetch error:", error);
     }
   };
 
@@ -43,12 +43,10 @@ const Profile: React.FC = () => {
   const handleDelete = async (childId: number) => {
     if (!window.confirm("Are you sure you want to delete this profile?")) return;
     setDeletingId(childId);
-
     try {
-      // Use the correct path as defined in backend routes
       await axiosInstance.delete(`/auth/child/${childId}`);
       fetchProfiles();
-    } catch (error) {
+    } catch (err) {
       alert("Failed to delete profile");
     } finally {
       setDeletingId(null);
@@ -81,26 +79,34 @@ const Profile: React.FC = () => {
           <p className="mb-4">You haven't created any child profiles yet.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {profiles.map(profile => (
+            {profiles.map((profile) => (
               <div key={profile.child_id} className="border p-4 rounded shadow">
-                <h3 className="font-bold">{profile.name}</h3>
+                <h3 className="font-bold text-lg">{profile.name}</h3>
                 <p>Age: {profile.age}</p>
                 <p>Gender: {profile.gender}</p>
-                <div className="mt-4 space-x-2">
+                <div className="mt-4 space-y-2">
                   <button
-                    onClick={() => handleEdit(profile)}
-                    className="text-blue-500 hover:underline"
-                    disabled={showForm}
+                    onClick={() => navigate(`/chat/${profile.child_id}`)}
+                    className="block text-blue-500 hover:underline"
                   >
-                    Edit
+                    Chat with {profile.name}
                   </button>
-                  <button
-                    onClick={() => handleDelete(profile.child_id)}
-                    className="text-red-500 hover:underline"
-                    disabled={deletingId === profile.child_id}
-                  >
-                    {deletingId === profile.child_id ? 'Deleting...' : 'Delete'}
-                  </button>
+                  <div className="space-x-2">
+                    <button
+                      onClick={() => handleEdit(profile)}
+                      className="text-gray-700 hover:underline"
+                      disabled={showForm}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(profile.child_id)}
+                      className="text-red-500 hover:underline"
+                      disabled={deletingId === profile.child_id}
+                    >
+                      {deletingId === profile.child_id ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -115,11 +121,10 @@ const Profile: React.FC = () => {
           {profiles.length === 0 ? "Create First Child Profile" : "Add New Child Profile"}
         </button>
 
-        {/* Allow access to chat without redirect */}
         {profiles.length > 0 && (
           <button
-            onClick={() => navigate('/chat')}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            onClick={() => navigate(`/chat/${profiles[0].child_id}`)}
+            className="mt-4 ml-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
           >
             Go to Chat
           </button>
@@ -127,8 +132,8 @@ const Profile: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full max-h-screen overflow-y-auto shadow-lg">
             <h2 className="text-xl font-bold mb-4">
               {editingProfile ? "Edit Child Profile" : "Create New Child Profile"}
             </h2>
