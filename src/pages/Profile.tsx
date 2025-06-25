@@ -21,7 +21,7 @@ const Profile: React.FC = () => {
   const fetchProfiles = async () => {
     try {
       // Use the correct path as defined in backend routes
-      const res = await axiosInstance.get('child');
+      const res = await axiosInstance.get('/auth/child/');
       setProfiles(res.data);
       setFetchError(null);
     } catch (error) {
@@ -46,7 +46,7 @@ const Profile: React.FC = () => {
 
     try {
       // Use the correct path as defined in backend routes
-      await axiosInstance.delete(`child/${childId}`);
+      await axiosInstance.delete(`/auth/child/${childId}`);
       fetchProfiles();
     } catch (error) {
       alert("Failed to delete profile");

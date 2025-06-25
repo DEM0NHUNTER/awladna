@@ -85,7 +85,7 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
       if (profile?.child_id) {
         await axiosInstance.put(`/auth/child/${profile.child_id}`, payload);
       } else {
-        await axiosInstance.post("/auth/child", payload);
+        await axiosInstance.post("/auth/child/", payload);
       }
 
       setSuccessMessage(profile?.child_id ? "Profile updated successfully!" : "Profile created successfully!");
