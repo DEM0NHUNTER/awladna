@@ -1,13 +1,13 @@
 import React, { useState } from "react";              // Bring in useState
 import { useNavigate } from "react-router-dom";      // Bring in useNavigate
-import apiClient from "../api/axiosInstance";        // Or wherever your client is
+import axiosInstance from "../api/axiosInstance";        // Or wherever your client is
 import RegisterForm from "../components/auth/RegisterForm";
 
 const Register = () => {
     const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
 
     const handleRegister = async () => {
-        const response = await apiClient.post("/auth/register", formData);
+        const response = await axiosInstance.post("/auth/register", formData);
         setShowVerificationPrompt(true); // Show prompt
     };
 
