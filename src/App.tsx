@@ -6,7 +6,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
-import ThemeToggle from "./components/ThemeToggle"; // ✅ Theme toggle
+import ThemeToggle from "./context/ThemeToggle"; // ✅ Theme toggle
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
