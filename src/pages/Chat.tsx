@@ -3,7 +3,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import axiosInstance from '@/api/axiosInstance';
-import axios from 'axios';
 
 import Sidebar from '@/components/layout/Sidebar';
 
@@ -54,38 +53,6 @@ const ChatPage: React.FC = () => {
     fetchChildInfo();
   }, [childIdNum]);
 
-  // Poll chat history (optional; you can disable this block if you want)
-  useEffect(() => {
-    const controller = new AbortController();
-
-    const fetchHistory = async () => {
-      try {
-        const res = await axiosInstance.get(`/auth/chat/${childIdNum}/history?limit=50`, {
-          signal: controller.signal,
-        });
-        setMessages(
-          res.data.map((item: any) => ({
-            id: item.timestamp ?? Math.random().toString(),
-            text: item.chatbot_response ?? item.user_input,
-            fromChild: Boolean(item.user_input),
-          }))
-        );
-      } catch (err) {
-        if (!axios.isCancel(err)) {
-          console.error('History load error', err);
-          setError('Failed to load chat history.');
-        }
-      }
-    };
-
-    fetchHistory();
-    const interval = setInterval(fetchHistory, 3000);
-    return () => {
-      clearInterval(interval);
-      controller.abort();
-    };
-  }, [childIdNum]);
-
   // Send a new message
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -105,6 +72,7 @@ const ChatPage: React.FC = () => {
         child_id: childIdNum,
         message: tempMessage.text,
       });
+
       const aiMessage: Message = {
         id: Date.now().toString() + '-ai',
         text: res.data.response,
@@ -113,8 +81,7 @@ const ChatPage: React.FC = () => {
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err: any) {
       console.error('Failed to send message:', err);
-      // If this was a validation error, dump the Pydantic details:
-      if (axios.isAxiosError(err) && err.response) {
+      if (axiosInstance.isAxiosError?.(err) && err.response) {
         console.error('Server validation error:', err.response.data);
       }
       setError('Failed to send message.');
