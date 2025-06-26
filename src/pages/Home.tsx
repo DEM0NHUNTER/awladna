@@ -25,7 +25,7 @@ const Home: React.FC = () => {
           className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-10"
         >
           Empowering parents and children with safe and supportive communication tools. Build stronger connections today.
-        </p>
+        </motion.p>
 
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
