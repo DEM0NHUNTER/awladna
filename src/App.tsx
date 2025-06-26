@@ -16,7 +16,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
-import ChildProfilePage from "./pages/Profile"; // or `./pages/ChildProfile` if you separate it
+import ChildProfilePage from "./pages/Profile";
+import RecommendationsPage from "./pages/RecommendationsPage";
 
 // Guest-only route guard
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,7 +33,10 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   }
   return <>{children}</>;
 };
-
+const RecommendationsPageWrapper = () => {
+  const { childId } = useParams();
+  return <RecommendationsPage childId={parseInt(childId || "0", 10)} />;
+};
 // Protected-only route guard
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -66,6 +70,7 @@ const App: React.FC = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/chat/:childId"  element={<Chat />} />
+                <Route path="/recommendations/:childId" element={<RecommendationsPageWrapper />} />
 {/*                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} /> */}
               </Route>
 
