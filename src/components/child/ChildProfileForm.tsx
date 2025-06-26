@@ -1,45 +1,67 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { IoClose } from 'react-icons/io5';
+import React from "react";
+import { useForm } from "react-hook-form";
+import axiosInstance from "../../api/axiosInstance";
 
-export default function ChildProfileForm({ onClose }: { onClose: () => void }) {
-  return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 30 }}
-        transition={{ duration: 0.3 }}
-        className="fixed top-20 right-8 z-50 w-full max-w-md rounded-2xl bg-white dark:bg-gray-900 shadow-lg border border-gray-200 dark:border-gray-700 p-6"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-white">Add Child Profile</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-red-500 transition-colors">
-            <IoClose size={24} />
-          </button>
-        </div>
-
-        <form className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300">Name</label>
-            <input type="text" className="w-full mt-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600 dark:text-gray-300">Birth Date</label>
-            <input type="date" className="w-full mt-1 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white" />
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
-            >
-              Save
-            </button>
-          </div>
-        </form>
-      </motion.div>
-    </AnimatePresence>
-  );
+interface Props {
+  profile: any;
+  onSave: () => void;
+  onCancel: () => void;
 }
+
+interface FormData {
+  name: string;
+  age: number;
+  gender: string;
+}
+
+const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+    defaultValues: profile || {},
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (profile) {
+        await axiosInstance.put(`/auth/child/${profile.child_id}`, data);
+      } else {
+        await axiosInstance.post("/auth/child/", data);
+      }
+      onSave();
+    } catch (err) {
+      alert("Failed to save profile");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Name</label>
+        <input {...register("name", { required: true })} className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        {errors.name && <p className="text-red-500 text-xs mt-1">Name is required.</p>}
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Age</label>
+        <input type="number" {...register("age", { required: true, min: 0 })} className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        {errors.age && <p className="text-red-500 text-xs mt-1">Valid age is required.</p>}
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Gender</label>
+        <select {...register("gender", { required: true })} className="mt-1 w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">Select gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors.gender && <p className="text-red-500 text-xs mt-1">Gender is required.</p>}
+      </div>
+      <div className="flex justify-end gap-3 pt-4">
+        <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400 transition">Cancel</button>
+        <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+          {profile ? "Update" : "Create"}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default ChildProfileForm;

@@ -1,4 +1,3 @@
-// src/pages/Profile.tsx
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -25,35 +24,8 @@ const Profile: React.FC = () => {
       setProfiles(res.data);
       setFetchError(null);
     } catch (error: any) {
-      if (error.response?.status === 401) {
-        setFetchError("Session expired. Please log in again.");
-      } else {
-        setFetchError("Failed to load child profiles. Please try again later.");
-      }
+      setFetchError("Failed to load child profiles. Please try later.");
       console.error("Profile fetch error:", error);
-    }
-  };
-
-  const handleCreate = () => {
-    setEditingProfile(null);
-    setShowForm(true);
-  };
-
-  const handleEdit = (profile: any) => {
-    setEditingProfile(profile);
-    setShowForm(true);
-  };
-
-  const handleDelete = async (childId: number) => {
-    if (!window.confirm("Are you sure you want to delete this profile?")) return;
-    setDeletingId(childId);
-    try {
-      await axiosInstance.delete(`/auth/child/${childId}`);
-      fetchProfiles();
-    } catch (err) {
-      alert("Failed to delete profile");
-    } finally {
-      setDeletingId(null);
     }
   };
 
@@ -68,25 +40,16 @@ const Profile: React.FC = () => {
 
   return (
     <div className="relative p-6 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Your Profile</h1>
-
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Header */}
+      <div className="flex justify-start items-center mb-8 space-x-4">
+        <h1 className="text-3xl font-bold">Your Profile</h1>
         <button
-          onClick={handleCreate}
-          className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl shadow transition-all"
+          onClick={() => { setEditingProfile(null); setShowForm(true); }}
+          className="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl shadow transition"
           disabled={showForm}
         >
           {profiles.length === 0 ? "Create First Child Profile" : "+ Add Child Profile"}
         </button>
-
-        {profiles.length > 0 && (
-          <button
-            onClick={() => navigate(`/chat/${profiles[0].child_id}`)}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow transition-all"
-          >
-            Go to Chat
-          </button>
-        )}
       </div>
 
       {fetchError && (
@@ -99,7 +62,7 @@ const Profile: React.FC = () => {
         <p className="text-gray-600">You haven't created any child profiles yet.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {profiles.map((profile) => (
+          {profiles.map(profile => (
             <div key={profile.child_id} className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
               <h3 className="text-xl font-semibold">{profile.name}</h3>
               <p className="text-sm text-gray-700">Age: {profile.age}</p>
@@ -112,18 +75,8 @@ const Profile: React.FC = () => {
                   Chat with {profile.name}
                 </button>
                 <div className="flex gap-3 text-sm">
-                  <button
-                    onClick={() => handleEdit(profile)}
-                    className="text-gray-700 hover:underline"
-                    disabled={showForm}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(profile.child_id)}
-                    className="text-red-500 hover:underline"
-                    disabled={deletingId === profile.child_id}
-                  >
+                  <button onClick={() => { setEditingProfile(profile); setShowForm(true); }} className="text-gray-700 hover:underline">Edit</button>
+                  <button onClick={() => handleDelete(profile.child_id)} className="text-red-500 hover:underline">
                     {deletingId === profile.child_id ? "Deleting..." : "Delete"}
                   </button>
                 </div>
@@ -135,8 +88,12 @@ const Profile: React.FC = () => {
 
       {/* Modal */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 transition-opacity backdrop-blur-sm">
-          <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full relative animate-fade-in-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Blurred backdrop */}
+          <div className="absolute inset-0 bg-black bg-opacity-30 backdrop-blur-sm transition-opacity ease-in duration-200" />
+
+          {/* Animated modal */}
+          <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-md w-full z-10 transform transition-all duration-300 ease-out scale-75 opacity-0 animate-fade-in-up">
             <h2 className="text-xl font-bold mb-4">
               {editingProfile ? "Edit Child Profile" : "Create New Child Profile"}
             </h2>
