@@ -53,8 +53,8 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
         birth_date: birthDate,
         age: calculateAge(birthDate),
         gender,
-        behavioral_patterns: JSON.stringify(behavioralData),
-        emotional_state: JSON.stringify(emotionalData),
+        behavioral_patterns: behavioralData,
+        emotional_state: emotionalData,
       };
 
       if (profile?.child_id) {
