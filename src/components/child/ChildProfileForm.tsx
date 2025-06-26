@@ -1,6 +1,7 @@
+//src/components/child/ChildProfileForm.tsx
 import React, { useState } from "react";
 import axiosInstance from "../../api/axiosInstance";
-
+import Modal from '../Modal';
 interface ChildProfile {
   child_id?: number;
   name?: string;

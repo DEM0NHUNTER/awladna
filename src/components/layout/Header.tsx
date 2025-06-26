@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from "../../context/AuthContext";
 import LogoutButton from "../auth/LogoutButton";
 
 const Header: React.FC = () => {
@@ -25,22 +25,7 @@ const Header: React.FC = () => {
               </Link>
               <LogoutButton />
             </>
-          ) : (
-            <>
-              <Link
-                to="/login"
-                className="text-gray-700 hover:text-indigo-600 transition"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition"
-              >
-                Register
-              </Link>
-            </>
-          )}
+          ) : null}
         </nav>
       </div>
     </header>
