@@ -36,12 +36,10 @@ const ChatPage: React.FC = () => {
     return <Navigate to="/profile" replace />;
   }
 
-  // Scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Fetch child profile info
   useEffect(() => {
     const fetchChildInfo = async () => {
       try {
@@ -209,7 +207,7 @@ const ChatPage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               onClick={sendMessage}
               disabled={!input.trim() || isLoading}
-              className={`px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-r-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-r-lg shadow-md hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
                 <span className="flex items-center">
