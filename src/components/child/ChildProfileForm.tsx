@@ -1,41 +1,97 @@
 import React, { useState } from "react";
 import axiosInstance from "../../api/axiosInstance";
 
-interface ChildProfile {
-  child_id?: number;
-  name?: string;
-  birth_date?: string;
-  age?: number;
-  gender?: string;
-  behavioral_patterns?: object;
-  emotional_state?: object;
-}
-
 interface Props {
-  profile?: ChildProfile | null;
+  profile?: any | null;
   onSave: () => void;
   onCancel: () => void;
 }
 
 const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
+  // Basic Profile Fields
   const [name, setName] = useState(profile?.name || "");
   const [birthDate, setBirthDate] = useState(profile?.birth_date?.split("T")[0] || "");
   const [gender, setGender] = useState(profile?.gender || "unspecified");
-  const [behavioralPatterns, setBehavioralPatterns] = useState(
-    JSON.stringify(profile?.behavioral_patterns || {}, null, 2)
-  );
-  const [emotionalState, setEmotionalState] = useState(
-    JSON.stringify(profile?.emotional_state || {}, null, 2)
-  );
 
-  const [loading, setLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
-  const [error, setError] = useState({
-    general: "",
-    behavioral: "",
-    emotional: ""
+  // Behavioral Patterns as structured fields
+  const [behavioralData, setBehavioralData] = useState({
+    tantrums: profile?.behavioral_patterns?.tantrums || "",
+    sleep_issues: profile?.behavioral_patterns?.sleep_issues || "",
+    social_behavior: profile?.behavioral_patterns?.social_behavior || "",
+    // Add more fields as needed
   });
 
+  // Emotional State as structured fields
+  const [emotionalData, setEmotionalData] = useState({
+    anxiety: profile?.emotional_state?.anxiety || "",
+    mood_swings: profile?.emotional_state?.mood_swings || "",
+    emotional_triggers: profile?.emotional_state?.emotional_triggers || "",
+    // Add more fields as needed
+  });
+
+  // Error Handling
+  const [error, setError] = useState({ general: "", behavioral: "", emotional: "" });
+  const [loading, setLoading] = useState(false);
+
+  // Handle Submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError({ general: "", behavioral: "", emotional: "" });
+
+    try {
+      // Convert to JSON only when needed
+      const behavioralJSON = JSON.stringify(behavioralData);
+      const emotionalJSON = JSON.stringify(emotionalData);
+
+      // Validate JSON
+      JSON.parse(behavioralJSON); // Ensure valid JSON
+      JSON.parse(emotionalJSON);
+
+      // Build Payload
+      const payload = {
+        name,
+        birth_date: birthDate,
+        age: calculateAge(birthDate),
+        gender,
+        behavioral_patterns: behavioralJSON,
+        emotional_state: emotionalJSON,
+      };
+
+      // API Call
+      if (profile?.child_id) {
+        await axiosInstance.put(`/auth/child/${profile.child_id}`, payload);
+      } else {
+        await axiosInstance.post("/auth/child/", payload);
+      }
+
+      onSave();
+    } catch (err: any) {
+      if (err instanceof SyntaxError) {
+        if (err.message.includes("behavioral")) {
+          setError((prev) => ({
+            ...prev,
+            behavioral: "Invalid data in Behavioral Patterns",
+          }));
+        } else if (err.message.includes("emotional")) {
+          setError((prev) => ({
+            ...prev,
+            emotional: "Invalid data in Emotional State",
+          }));
+        }
+      } else {
+        setError((prev) => ({
+          ...prev,
+          general: "Failed to save profile. Please check your inputs and try again.",
+        }));
+        console.error("Profile save error:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper: Calculate Age
   const calculateAge = (birthDate: string): number => {
     if (!birthDate) return 0;
     const today = new Date();
@@ -48,126 +104,53 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
     return age;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError({ general: "", behavioral: "", emotional: "" });
-    setSuccessMessage("");
-
-    try {
-      let parsedBehavioral = {};
-      let parsedEmotional = {};
-
-      try {
-        parsedBehavioral = JSON.parse(behavioralPatterns);
-      } catch {
-        throw new SyntaxError("behavioral");
-      }
-
-      try {
-        parsedEmotional = JSON.parse(emotionalState);
-      } catch {
-        throw new SyntaxError("emotional");
-      }
-
-      const payload = {
-        name,
-        birth_date: birthDate,
-        age: calculateAge(birthDate),
-        gender,
-        behavioral_patterns: parsedBehavioral,
-        emotional_state: parsedEmotional
-      };
-
-      if (profile?.child_id) {
-        await axiosInstance.put(`/auth/child/${profile.child_id}`, payload);
-      } else {
-        await axiosInstance.post("/auth/child/", payload);
-      }
-
-      setSuccessMessage(profile?.child_id ? "Profile updated!" : "Profile created!");
-      setTimeout(() => {
-        onSave();
-        setSuccessMessage("");
-      }, 2000);
-    } catch (err: any) {
-      if (err instanceof SyntaxError) {
-        setError({
-          ...error,
-          behavioral: err.message === "behavioral" ? "Invalid Behavioral Patterns JSON" : "",
-          emotional: err.message === "emotional" ? "Invalid Emotional State JSON" : ""
-        });
-      } else {
-        console.error(err);
-        setError({
-          ...error,
-          general: "Something went wrong. Please try again."
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Success Message */}
-      {successMessage && (
-        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-3 rounded">
-          {successMessage}
-        </div>
-      )}
-
-      {/* General Error */}
-      {error.general && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
-          {error.general}
-        </div>
-      )}
-
-      {/* Name */}
+      {/* Name Field */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Child's Name
+        </label>
         <input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
-            focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                   bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                   focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
           placeholder="Enter child's name"
           required
-          minLength={2}
-          maxLength={100}
         />
       </div>
 
       {/* Birth Date */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Birth Date</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Birth Date
+        </label>
         <input
           type="date"
           value={birthDate}
           onChange={(e) => setBirthDate(e.target.value)}
           className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
-            focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                   bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                   focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
           required
         />
-        {birthDate && (
-          <p className="text-sm text-gray-500 mt-1">Calculated Age: {calculateAge(birthDate)}</p>
-        )}
       </div>
 
-      {/* Gender */}
+      {/* Gender Select */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Gender
+        </label>
         <select
           value={gender}
           onChange={(e) => setGender(e.target.value)}
           className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
-            focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+                   bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                   focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+          required
         >
           <option value="male">Male</option>
           <option value="female">Female</option>
@@ -176,67 +159,141 @@ const ChildProfileForm: React.FC<Props> = ({ profile, onSave, onCancel }) => {
         </select>
       </div>
 
-      {/* Behavioral Patterns JSON */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Behavioral Patterns (JSON)</label>
-        <textarea
-          value={behavioralPatterns}
-          onChange={(e) => setBehavioralPatterns(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white/50 dark:bg-gray-700/50 font-mono text-sm min-h-[100px]
-            backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-        />
-        {error.behavioral && <p className="text-sm text-red-500">{error.behavioral}</p>}
+      {/* Behavioral Patterns Inputs */}
+      <div className="pt-4">
+        <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Behavioral Patterns</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tantrums
+            </label>
+            <input
+              type="text"
+              value={behavioralData.tantrums}
+              onChange={(e) =>
+                setBehavioralData({ ...behavioralData, tantrums: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe tantrum behavior"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Sleep Issues
+            </label>
+            <input
+              type="text"
+              value={behavioralData.sleep_issues}
+              onChange={(e) =>
+                setBehavioralData({ ...behavioralData, sleep_issues: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe sleep patterns"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Social Behavior
+            </label>
+            <input
+              type="text"
+              value={behavioralData.social_behavior}
+              onChange={(e) =>
+                setBehavioralData({ ...behavioralData, social_behavior: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe social interactions"
+            />
+          </div>
+        </div>
+        {error.behavioral && (
+          <p className="text-red-500 text-sm mt-2">{error.behavioral}</p>
+        )}
       </div>
 
-      {/* Emotional State JSON */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Emotional State (JSON)</label>
-        <textarea
-          value={emotionalState}
-          onChange={(e) => setEmotionalState(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
-            bg-white/50 dark:bg-gray-700/50 font-mono text-sm min-h-[100px]
-            backdrop-blur-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
-        />
-        {error.emotional && <p className="text-sm text-red-500">{error.emotional}</p>}
+      {/* Emotional State Inputs */}
+      <div className="pt-4">
+        <h3 className="font-semibold text-gray-800 dark:text-white mb-3">Emotional State</h3>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Anxiety
+            </label>
+            <input
+              type="text"
+              value={emotionalData.anxiety}
+              onChange={(e) =>
+                setEmotionalData({ ...emotionalData, anxiety: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe anxiety symptoms"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Mood Swings
+            </label>
+            <input
+              type="text"
+              value={emotionalData.mood_swings}
+              onChange={(e) =>
+                setEmotionalData({ ...emotionalData, mood_swings: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe mood changes"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Emotional Triggers
+            </label>
+            <input
+              type="text"
+              value={emotionalData.emotional_triggers}
+              onChange={(e) =>
+                setEmotionalData({ ...emotionalData, emotional_triggers: e.target.value })
+              }
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600
+                       bg-white/50 dark:bg-gray-700/50 backdrop-blur-sm focus:ring-2
+                       focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors"
+              placeholder="Describe emotional triggers"
+            />
+          </div>
+        </div>
+        {error.emotional && (
+          <p className="text-red-500 text-sm mt-2">{error.emotional}</p>
+        )}
       </div>
 
-      {/* Buttons */}
+      {/* Action Buttons */}
       <div className="flex justify-end space-x-3 pt-4">
         <button
           type="button"
           onClick={onCancel}
           className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300
-            rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                   rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
           disabled={loading}
         >
           Cancel
         </button>
         <button
           type="submit"
-          className={`px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white
-            rounded-lg shadow hover:shadow-md transition-all duration-200 flex items-center
-            ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white
+                   rounded-lg shadow hover:shadow-md hover:from-blue-700 hover:to-indigo-700
+                   transition-all duration-200 disabled:opacity-70"
           disabled={loading}
         >
-          {loading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2
-                  5.291A7.962 7.962 0 014 12H0c0 3.042 1.135
-                  5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              Saving...
-            </>
-          ) : (
-            `${profile?.child_id ? "Update" : "Create"} Profile`
-          )}
+          {loading ? "Saving..." : "Save"}
         </button>
       </div>
     </form>

@@ -1,72 +1,70 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
-import AnimatedSection from "@/components/AnimatedSection";
+import { Link } from "react-router-dom";
 
 const Home: React.FC = () => {
   const { user, loading } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 transition-colors duration-500 px-4 py-12">
-      <div className="w-full max-w-3xl p-6 bg-white/90 dark:bg-white/10 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-center">
-        <AnimatedSection animation="fade-up" duration={1000}>
-          <h1 className="text-4xl font-bold mb-4 text-indigo-700 dark:text-indigo-300">
-            Welcome to Awladna
-          </h1>
-          <p className="text-lg text-gray-700 dark:text-gray-300 mb-6 max-w-xl mx-auto">
-            A caring space powered by AI to support your parenting journey. Whether you're new or returning, we're glad to have you here.
-          </p>
-        </AnimatedSection>
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-700 text-white px-4 py-12">
+      <div className="max-w-6xl mx-auto text-center">
+        <motion.h1
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-5xl md:text-6xl font-extrabold mb-6"
+        >
+          Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Awladna</span>
+        </motion.h1>
 
-        <AnimatedSection animation="zoom-in" duration={800} delay={200}>
-          <div className="bg-blue-500 text-white p-6 rounded-lg shadow-md mb-6">
-            <h2 className="text-2xl font-semibold mb-2">Our Mission</h2>
-            <p>Support, guide, and empower your parenting journey.</p>
-          </div>
-        </AnimatedSection>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="text-lg md:text-xl text-gray-200 max-w-3xl mx-auto mb-10"
+        >
+          Empowering parents and children with safe and supportive communication tools. Build stronger connections today.
+        </p>
 
-        {loading ? (
-          <div className="flex justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
-          </div>
-        ) : user ? (
-          <AnimatedSection animation="fade-right" duration={900} delay={400}>
-            <div>
-              <p className="text-lg text-gray-700 dark:text-gray-200 mb-4">
-                Hello, <strong>{user.email}</strong>! Go to your{" "}
-                <Link
-                  to="/profile"
-                  className="text-indigo-600 hover:text-indigo-800 dark:hover:text-indigo-400 font-medium underline transition"
-                >
-                  Profile
-                </Link>.
-              </p>
-              <Link
-                to="/dashboard"
-                className="inline-block mt-4 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition"
-              >
-                Go to Dashboard
-              </Link>
-            </div>
-          </AnimatedSection>
-        ) : (
-          <AnimatedSection animation="fade-right" duration={900} delay={400}>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
-              <Link
-                to="/login"
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md font-semibold transition-transform transform hover:scale-105"
-              >
-                Login
-              </Link>
-              <Link
-                to="/register"
-                className="px-6 py-3 bg-white dark:bg-transparent border border-indigo-600 text-indigo-600 dark:text-indigo-300 rounded-md font-semibold transition-transform transform hover:scale-105 hover:bg-indigo-50 dark:hover:bg-white/10"
-              >
-                Register
-              </Link>
-            </div>
-          </AnimatedSection>
-        )}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          className="flex flex-col sm:flex-row justify-center gap-4"
+        >
+          <Link
+            to="/login"
+            className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+          >
+            Log In
+          </Link>
+          <Link
+            to="/register"
+            className="px-6 py-3 rounded-xl bg-white/10 backdrop-blur-sm text-white font-semibold border border-white/20 hover:bg-white/20 transition-all duration-200"
+          >
+            Create Account
+          </Link>
+        </motion.div>
+
+        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { title: "Secure Communication", desc: "End-to-end encrypted conversations between parents and children." },
+            { title: "Behavioral Insights", desc: "Track emotional patterns and growth with advanced analytics." },
+            { title: "Smart Alerts", desc: "Get real-time notifications for important milestones and behaviors." }
+          ].map((card, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 * index, duration: 0.6 }}
+              className="bg-white/10 backdrop-blur-md p-6 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-300"
+            >
+              <h3 className="text-xl font-bold mb-2">{card.title}</h3>
+              <p className="text-gray-300">{card.desc}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
