@@ -1,5 +1,6 @@
+// front_end/src/App.tsx
 import React from "react";
-import { Routes, Route, Navigate, Outlet, useLocation, Link } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 import Header from "./components/layout/Header";
@@ -15,8 +16,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
+import ChildProfilePage from "./pages/Profile";
 import RecommendationsPage from "./pages/RecommendationsPage";
-import { useParams } from "react-router-dom";
 
 // Guest-only route guard
 const GuestRoute = ({ children }: { children: React.ReactNode }) => {
@@ -32,12 +33,10 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   }
   return <>{children}</>;
 };
-
 const RecommendationsPageWrapper = () => {
   const { childId } = useParams();
   return <RecommendationsPage childId={parseInt(childId || "0", 10)} />;
 };
-
 // Protected-only route guard
 const ProtectedRoute = () => {
   const { user, loading } = useAuth();
@@ -48,44 +47,11 @@ const ProtectedRoute = () => {
 
 // Main App Component
 const App: React.FC = () => {
-  const location = useLocation();
-  const { user, loading } = useAuth();
-  const hideButtons = location.pathname.startsWith("/chat");
-
   return (
     <AuthProvider>
       <ErrorBoundary>
         <div className="flex flex-col min-h-screen">
           <Header />
-
-          {!hideButtons && (
-            <nav className="bg-indigo-700 text-white px-6 py-3 flex justify-end gap-4">
-              {user && !loading ? (
-                <Link
-                  to="/profile"
-                  className="hover:text-blue-200 transition-colors"
-                >
-                  Profile
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="hover:text-blue-200 transition-colors"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="px-3 py-1 bg-white/20 text-white rounded hover:bg-white/30 transition-colors"
-                  >
-                    Register
-                  </Link>
-                </>
-              )}
-            </nav>
-          )}
-
           <main className="flex-grow bg-gray-50 p-4">
             <Routes>
               {/* Public (guest-only) routes */}
@@ -94,7 +60,8 @@ const App: React.FC = () => {
               <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
               <Route path="/register" element={<GuestRoute><Register /></GuestRoute>} />
 
-              {/* Open routes */}
+              {/* Open routes (accessible to both guest and logged-in) */}
+{/*               <Route path="/verify-email" element={<VerifyEmail />} /> */}
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -102,15 +69,15 @@ const App: React.FC = () => {
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/profile" element={<Profile />} />
-                <Route path="/chat/:childId" element={<Chat />} />
+                <Route path="/chat/:childId"  element={<Chat />} />
                 <Route path="/recommendations/:childId" element={<RecommendationsPageWrapper />} />
+{/*                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} /> */}
               </Route>
 
               {/* Catch-all fallback */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-
           <Footer />
         </div>
       </ErrorBoundary>
