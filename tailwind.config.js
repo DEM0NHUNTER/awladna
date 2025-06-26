@@ -1,16 +1,18 @@
 module.exports = {
-  content: ["./src/**/*.{tsx,ts,js,jsx}"],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
   theme: {
     extend: {
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+      animation: {
+        glow: 'glow 1.5s infinite',
       },
-      backdropBlur: {
-        xs: "2px",
+      keyframes: {
+        glow: {
+          '0%, 100%': { boxShadow: '0 0 10px #8be9fd' },
+          '50%':     { boxShadow: '0 0 20px #8be9fd' },
+        },
       },
     },
   },
   plugins: [],
-  darkMode: 'class', // ✅ Required for dark mode via class
-
 };
