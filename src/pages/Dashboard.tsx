@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import axiosInstance from "@/api/axiosInstance";
 import LineChart from "@/components/charts/LineChart";
 import { useTranslation } from "react-i18next";
-
+import LineChart from "@/components/charts/LineChart";
+import BarChart from "@/components/charts/BarChart";
 const Dashboard: React.FC = () => {
   const [progressData, setProgressData] = useState<any[]>([]);
   const { i18n } = useTranslation();
