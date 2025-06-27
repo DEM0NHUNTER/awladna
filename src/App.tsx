@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
+import  Dashboard  from "./pages/Dashboard"; 
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
