@@ -6,6 +6,7 @@ import axiosInstance from "@/api/axiosInstance";
 
 import Sidebar from "@/components/layout/Sidebar";
 import RecommendationPanel from "@/components/Recommendations/RecommendationPanel";
+import FeedbackForm from "@/components/FeedbackForm";
 
 interface Message {
   id: string;
@@ -31,6 +32,8 @@ const ChatPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [aiMessageCount, setAiMessageCount] = useState<number>(0);
+  const [showFeedback, setShowFeedback] = useState<boolean>(false);
 
   if (!childId || isNaN(childIdNum)) {
     return <Navigate to="/profile" replace />;
@@ -52,6 +55,12 @@ const ChatPage: React.FC = () => {
     };
     fetchChildInfo();
   }, [childIdNum]);
+
+  useEffect(() => {
+    const count = messages.filter(m => !m.fromUser).length;
+    setAiMessageCount(count);
+    setShowFeedback(count > 0 && count % 5 === 0);
+  }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
@@ -145,23 +154,33 @@ const ChatPage: React.FC = () => {
                 className="flex-1 overflow-auto p-6 space-y-4 bg-gray-900/70"
               >
                 {messages.map((m) => (
-                  <motion.div
-                    key={m.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className={`flex ${m.fromUser ? "justify-end" : "justify-start"}`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-3 rounded-2xl shadow-lg text-sm ${
-                        m.fromUser
-                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none"
-                          : "bg-white/10 text-gray-200 rounded-bl-none"
-                      }`}
+                  <React.Fragment key={m.id}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`flex ${m.fromUser ? "justify-end" : "justify-start"}`}
                     >
-                      {m.text}
-                    </div>
-                  </motion.div>
+                      <div
+                        className={`max-w-xs px-4 py-3 rounded-2xl shadow-lg text-sm ${
+                          m.fromUser
+                            ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-br-none"
+                            : "bg-white/10 text-gray-200 rounded-bl-none"
+                        }`}
+                      >
+                        {m.text}
+                      </div>
+                    </motion.div>
+
+                    {!m.fromUser && showFeedback && (
+                      <div className="mt-2 w-full">
+                        <FeedbackForm
+                          chatLogId={m.id}
+                          onSubmit={() => setShowFeedback(false)}
+                        />
+                      </div>
+                    )}
+                  </React.Fragment>
                 ))}
 
                 {isLoading && (

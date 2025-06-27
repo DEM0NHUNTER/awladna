@@ -1,38 +1,47 @@
-// src/pages/DashboardPage.tsx
-import { useAuth } from "../context/AuthContext";
-import React from 'react'
-import { Link } from 'react-router-dom'
+// front_end/src/pages/Dashboard.tsx
+import React, { useEffect, useState } from "react";
+import axiosInstance from "@/api/axiosInstance";
+import LineChart from "@/components/charts/LineChart";
+import { useTranslation } from "react-i18next";
 
-const DashboardPage: React.FC = () => {
+const Dashboard: React.FC = () => {
+  const [progressData, setProgressData] = useState<any[]>([]);
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const res = await axiosInstance.get("/api/analytics/progress", {
+        params: { language: i18n.language }
+      });
+      setProgressData(res.data);
+    };
+    fetchProgress();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 md:p-10">
-      <main className="bg-white shadow-2xl rounded-2xl p-8 sm:p-10 md:p-12 max-w-xl w-full text-center animate-fade-in">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-primary mb-4 drop-shadow-sm">
-          Awladna
-        </h1>
-        <p className="text-gray-600 text-base md:text-lg mb-8">
-          Empowering parents and children with safe and supportive communication tools.
-        </p>
+    <div className="dashboard" dir={i18n.dir()}>
+      <h2>Child Progress Monitoring</h2>
 
-        <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Link
-            to="/login"
-            className="px-6 py-3 rounded-xl bg-primary text-white font-semibold shadow hover:bg-primary-dark transition-transform transform hover:scale-105 duration-200 w-full sm:w-auto"
-          >
-            Login
-          </Link>
-          <Link
-            to="/register"
-            className="px-6 py-3 rounded-xl bg-white text-primary border border-primary font-semibold shadow hover:bg-blue-50 transition-transform transform hover:scale-105 duration-200 w-full sm:w-auto"
-          >
-            Register
-          </Link>
-        </div>
-      </main>
+      {/* Emotional State Trends */}
+      <div className="trend-chart">
+        <h3>Emotional State Over Time</h3>
+        <LineChart
+          data={progressData.map(d => ({
+            date: d.date,
+            anxiety: d.emotional_state.anxiety,
+            mood_swings: d.emotional_state.mood_swings
+          }))}
+        />
+      </div>
+
+      {/* Behavioral Patterns */}
+      <div className="trend-chart">
+        <BarChart data={progressData.map(d => ({
+          date: d.date,
+          tantrums: d.behavioral_patterns.tantrums,
+          social_behavior: d.behavioral_patterns.social_behavior
+        }))} />
+      </div>
     </div>
-  )
-}
-
-export default DashboardPage
-
-
+  );
+};

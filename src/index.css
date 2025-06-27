@@ -1,18 +1,38 @@
 @import "tailwindcss";
-@import "tailwindcss";
-
-
+/* Base Layer for Global Variables */
 @layer base {
+  /* ===== Default Theme ===== */
   :root {
-    /* Light theme */
+    --color-primary: #3b82f6;        /* blue-500 */
+    --color-secondary: #8b5cf6;      /* purple-500 */
+
+    /* Light Theme */
     --color-bg: #f9fafb;
     --color-text: #111827;
     --color-card: #ffffff;
     --color-border: #e5e7eb;
   }
 
+  /* ===== Arabic Theme (RTL) ===== */
+  :root[dir="rtl"] {
+    --color-primary: #10b981;        /* green-500 */
+    --color-secondary: #f97316;      /* orange-500 */
+  }
+
+  /* ===== Dashboard Theme in English ===== */
+  :root .dashboard[lang="en"] {
+    --color-primary: #10b981;
+    --color-secondary: #f97316;
+  }
+
+  /* ===== Analytics Theme in Arabic ===== */
+  :root .analytics[lang="ar"] {
+    --color-primary: #ef4444;
+    --color-secondary: #f59e0b;
+  }
+
+  /* ===== Dark Theme ===== */
   .dark {
-    /* Dark theme */
     --color-bg: #111827;
     --color-text: #f9fafb;
     --color-card: #1f2937;
