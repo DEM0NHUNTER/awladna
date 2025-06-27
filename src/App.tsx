@@ -6,8 +6,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 import ErrorBoundary from "./components/ErrorBoundary";
-import  Dashboard  from "./pages/Dashboard"; 
-
+import { Dashboard } from "./pages/Dashboard";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -15,7 +14,6 @@ import Profile from "./pages/Profile";
 import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import ChildProfilePage from "./pages/Profile";
 import RecommendationsPage from "./pages/RecommendationsPage";
