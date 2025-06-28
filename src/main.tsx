@@ -19,11 +19,9 @@ AOS.init({
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthProvider>
         <LanguageProvider>
           <App />
         </LanguageProvider>
-      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
