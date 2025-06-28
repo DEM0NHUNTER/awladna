@@ -52,26 +52,6 @@ const App: React.FC = () => {
   const { refreshUser } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // When refresh interceptor succeeds
-    const handleRefreshSuccess = () => {
-      refreshUser();
-    };
-    // When token is invalidated
-    const handleUnauthorized = () => {
-      toast.warning("Session expired. Please log in again.");
-      navigate("/login");
-    };
-
-    window.addEventListener("auth-refresh-success", handleRefreshSuccess);
-    window.addEventListener("auth-unauthorized", handleUnauthorized);
-
-    return () => {
-      window.removeEventListener("auth-refresh-success", handleRefreshSuccess);
-      window.removeEventListener("auth-unauthorized", handleUnauthorized);
-    };
-  }, [refreshUser, navigate]);
-
   return (
     <>
       <ToastContainer position="top-right" autoClose={4000} />
