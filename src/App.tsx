@@ -1,8 +1,9 @@
 // front_end/src/App.tsx
 import React, { useEffect } from "react";
 import { Routes, Route, Navigate, Outlet, useNavigate, useParams } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import toast from "react-hot-toast";
+import { useAuth } from "./context/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -18,11 +19,8 @@ import ResetPassword from "./pages/ResetPassword";
 import Chat from "./pages/Chat";
 import RecommendationsPage from "./pages/RecommendationsPage";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
 // Guest-only route guard
-const GuestRoute = ({ children }: { children: React.ReactNode }) => {
+const GuestRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading, childProfiles } = useAuth();
 
   if (loading) return <div>Loading...</div>;
@@ -36,42 +34,43 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-const RecommendationsPageWrapper = () => {
-  const { childId } = useParams();
+// Wrapper for RecommendationsPage to extract :childId param
+const RecommendationsPageWrapper: React.FC = () => {
+  const { childId } = useParams<{ childId: string }>();
   return <RecommendationsPage childId={parseInt(childId || "0", 10)} />;
 };
 
 // Protected-only route guard
-const ProtectedRoute = () => {
+const ProtectedRoute: React.FC = () => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
   return <Outlet />;
 };
 
-// Main App Component
 const App: React.FC = () => {
   const { refreshUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // When refresh interceptor succeeds
+    const handleRefreshSuccess = () => {
+      refreshUser();
+    };
+    // When token is invalidated
     const handleUnauthorized = () => {
       toast.warning("Session expired. Please log in again.");
       navigate("/login");
     };
 
-    const handleRefreshSuccess = async () => {
-      await refreshUser?.();
-    };
-
-    window.addEventListener("auth-unauthorized", handleUnauthorized);
     window.addEventListener("auth-refresh-success", handleRefreshSuccess);
+    window.addEventListener("auth-unauthorized", handleUnauthorized);
 
     return () => {
-      window.removeEventListener("auth-unauthorized", handleUnauthorized);
       window.removeEventListener("auth-refresh-success", handleRefreshSuccess);
+      window.removeEventListener("auth-unauthorized", handleUnauthorized);
     };
-  }, [navigate, refreshUser]);
+  }, [refreshUser, navigate]);
 
   return (
     <>
@@ -111,8 +110,4 @@ const App: React.FC = () => {
   );
 };
 
-export default () => (
-  <AuthProvider>
-    <App />
-  </AuthProvider>
-);
+export default App;
