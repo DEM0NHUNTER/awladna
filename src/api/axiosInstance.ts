@@ -1,25 +1,27 @@
 // front_end/src/api/axiosInstance.ts
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
+import { toast } from "react-toastify";
 
-// Validate base URL
+// Set up base URL
 const baseURL = import.meta.env.VITE_API_URL;
 if (!baseURL) throw new Error("Missing VITE_API_URL");
 
+// Create Axios instance
 const axiosInstance: AxiosInstance = axios.create({
   baseURL,
-  withCredentials: false, // Match backend settings
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
-    "Access-Control-Allow-Origin": "*"
+    Accept: "application/json",
   },
-  timeout: 10000
+  withCredentials: true, // Adjust depending on your backend
+  timeout: 10000,
 });
 
-// Refresh logic state
+// Track refresh queue and status
 let isRefreshing = false;
 let failedQueue: any[] = [];
 
+// Helper: retry waiting requests after refresh
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
@@ -31,18 +33,13 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-// REQUEST INTERCEPTOR
+// ✅ Request interceptor: inject token, sanitize URL
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Clean up URL
     config.url = config.url?.trim();
 
-    // Skip auth for public routes
-    const publicRoutes = ["/auth/register", "/auth/login", "/auth/verify-email"];
-    const isPublic = publicRoutes.some((route) => config.url?.includes(route));
-
     const token = localStorage.getItem("access_token");
-    if (!isPublic && token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
@@ -54,23 +51,14 @@ axiosInstance.interceptors.request.use(
   }
 );
 
-// RESPONSE INTERCEPTOR
+// ✅ Response interceptor: handle errors, refresh logic
 axiosInstance.interceptors.response.use(
-  (response) => {
-    console.log("API Response:", response.config.url, response.status);
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest: any = error.config;
+  (response) => response,
+  async (error: AxiosError & { config: any }) => {
+    const originalRequest = error.config;
 
-    // Network error (e.g. server unreachable)
-    if (!error.response) {
-      console.error("Network error:", error.message);
-      return Promise.reject(new Error("Network error. Please check your connection."));
-    }
-
-    // Handle 401 (Unauthorized) with refresh token logic
-    if (error.response.status === 401 && !originalRequest._retry) {
+    // Handle unauthorized errors and try refreshing
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       const refresh_token = localStorage.getItem("refresh_token");
@@ -86,7 +74,7 @@ axiosInstance.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${token}`;
               resolve(axiosInstance(originalRequest));
             },
-            reject
+            reject,
           });
         });
       }
@@ -94,14 +82,9 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const res = await axios.post(
-          `${baseURL}/auth/refresh-token`,
-          { refresh_token },
-          {
-            headers: { "Content-Type": "application/json" },
-            withCredentials: true
-          }
-        );
+        const res = await axios.post(`${baseURL}/auth/refresh-token`, {
+          refresh_token,
+        });
 
         const newAccessToken = res.data.access_token;
         localStorage.setItem("access_token", newAccessToken);
@@ -109,24 +92,32 @@ axiosInstance.interceptors.response.use(
         axiosInstance.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
-        processQueue(null, newAccessToken);
+        // ✅ Hook into global refreshUser() if available
+        window.dispatchEvent(new Event("auth-token-refreshed"));
 
+
+        processQueue(null, newAccessToken);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+
+        // ❗ Redirect to login
         window.dispatchEvent(new Event("auth-unauthorized"));
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     }
-
-    // Handle 500 Server Errors
+    if (error.response?.status === 403) {
+      toast.error("You don’t have permission to perform this action.");
+    }
     if (error.response?.status === 500) {
-      console.error("Server error:", error.response.data);
-      return Promise.reject(new Error("Internal server error. Please try again later."));
+      toast.error("Server error. Please try again later.");
+    } else if (!error.response) {
+      toast.error("Network error. Please check your connection.");
     }
 
     return Promise.reject(error);

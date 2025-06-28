@@ -1,6 +1,6 @@
 // src/api/auth.ts
 
-import apiClient from './client';
+import axiosInstance from "@/api/axiosInstance";
 
 interface LoginPayload {
   email: string;
@@ -19,21 +19,21 @@ interface ResetPasswordPayload {
 }
 
 export const login = async ({ email, password}: LoginPayload) => {
-  return apiClient.post('/api/auth/login', { email, password});
+  return axiosInstance.post('/api/auth/login', { email, password});
 };
 
 export const register = async ({ email, password }: RegisterPayload) => {
-  return apiClient.post('/api/auth/register', { email, password });
+  return axiosInstance.post('/api/auth/register', { email, password });
 };
 
 export const forgotPassword = async (email: string) => {
-  return apiClient.post('/api/auth/forgot-password', { email });
+  return axiosInstance.post('/api/auth/forgot-password', { email });
 };
 
 export const resetPassword = async ({ token, newPassword }: ResetPasswordPayload) => {
-  return apiClient.post('/api/auth/reset-password', { token, newPassword });
+  return axiosInstance.post('/api/auth/reset-password', { token, newPassword });
 };
 
 export const logout = async () => {
-  return apiClient.post('/api/auth/logout');
+  return axiosInstance.post('/api/auth/logout');
 };
