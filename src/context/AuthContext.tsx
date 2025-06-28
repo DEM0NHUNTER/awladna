@@ -36,17 +36,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [childProfiles, setChildProfiles] = useState<any[]>([]);
   const navigate = useNavigate();
 
-const isTokenExpired = (token: string) => {
-  const payload = JSON.parse(atob(token.split(".")[1]));
-  return payload.exp < Date.now() / 1000;
-};
-
-// Use this before API calls
-if (isTokenExpired(refreshToken)) {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
-  window.dispatchEvent(new Event("auth-unauthorized"));
-}
   // ✅ Fetch authenticated user and child profiles
   const refreshUser = async () => {
     try {
@@ -140,11 +129,6 @@ if (isTokenExpired(refreshToken)) {
       navigate("/login");
     };
     window.addEventListener("auth-unauthorized", handleUnauthorized);
-    // Add logging
-    const handleUnauthorized = () => {
-      console.warn("Unauthorized: Redirecting to /login");
-      navigate("/login"); // Ensure this route exists
-    };
     return () => {
       window.removeEventListener("auth-unauthorized", handleUnauthorized);
     };
