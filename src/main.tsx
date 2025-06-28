@@ -15,9 +15,21 @@ AOS.init({
   once: true,
   offset: 100,
 });
+const rootEl = document.getElementById("root");
+if (!rootEl) {
+  throw new Error("No root element found. Is your index.html missing <div id='root'>?");
+}
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
     <BrowserRouter>
-          <App />
+      <AuthProvider>
+        <LanguageProvider>
+          <App>
+            <div id="root" style="border: 2px solid red;"></div>
+          </App>
+        </LanguageProvider>
+      </AuthProvider>
     </BrowserRouter>
+  </React.StrictMode>
 );
