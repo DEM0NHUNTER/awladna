@@ -1,6 +1,7 @@
 // front_end/src/context/LanguageContext.tsx
 import React, { createContext, useState, useContext, useEffect } from "react";
 import axiosInstance from "@/api/axiosInstance"; // Make sure this path is correct
+import axios from "axios";
 
 interface Theme {
   primary: string;
