@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Child profile loader
+  // ✅ Load child profiles
   const getChildProfiles = async () => {
     try {
       const res = await axiosInstance.get("/auth/child/");
@@ -66,13 +66,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Login (do not touch tokens, just refresh state)
+  // ✅ Login: store tokens and refresh state
   const login = async (email: string, password: string) => {
     try {
       const response = await axiosInstance.post("/auth/login", {
         email,
         password,
       });
+
+      const { access_token, refresh_token } = response.data;
+
+      localStorage.setItem("access_token", access_token);
+      localStorage.setItem("refresh_token", refresh_token);
 
       await refreshUser();
       return { success: true };
@@ -84,33 +89,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Register without storing tokens directly
+  // ✅ Register without handling tokens
   const register = async (email: string, password: string, name?: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password, name });
-      // Optionally: navigate("/verify-email");
+      // navigate("/verify-email"); // optional
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || "Registration failed");
     }
   };
 
-  // ✅ Logout (state-only)
+  // ✅ Logout: server + local cleanup
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
-      setUser(null);
-      setChildProfiles([]);
     } catch (err) {
       console.error("Logout failed", err);
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      setChildProfiles([]);
     }
   };
 
-  // ✅ On first mount: restore session
+  // ✅ Restore session on mount
   useEffect(() => {
     refreshUser();
   }, []);
 
-  // ✅ Listen for refresh event (emitted from axios interceptor)
+  // ✅ Refresh user after token refresh
   useEffect(() => {
     const handleRefetch = () => {
       refreshUser();
@@ -121,9 +129,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // ✅ Listen for unauthorized and redirect to login
+  // ✅ Handle 401s by clearing and redirecting
   useEffect(() => {
     const handleUnauthorized = () => {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       setUser(null);
       setChildProfiles([]);
       navigate("/login");
