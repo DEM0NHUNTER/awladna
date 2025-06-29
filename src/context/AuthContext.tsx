@@ -67,22 +67,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ✅ Login (do not touch tokens, just refresh state)
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await axiosInstance.post("/auth/login", {
-        email,
-        password,
-      });
+    const login = async (email: string, password: string) => {
+      try {
+        const response = await axiosInstance.post("/auth/login", {
+          email,
+          password,
+        });
 
-      await refreshUser();
-      return { success: true };
-    } catch (err: any) {
-      return {
-        success: false,
-        error: err.response?.data?.detail || "Login failed",
-      };
-    }
-  };
+        const { access_token, refresh_token } = response.data;
+
+        localStorage.setItem("access_token", access_token);
+        localStorage.setItem("refresh_token", refresh_token);
+
+        await refreshUser();
+        return { success: true };
+      } catch (err: any) {
+        return {
+          success: false,
+          error: err.response?.data?.detail || "Login failed",
+        };
+      }
+    };
+
 
   // ✅ Register without storing tokens directly
   const register = async (email: string, password: string, name?: string) => {
@@ -95,15 +101,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ✅ Logout (state-only)
-  const logout = async () => {
-    try {
-      await axiosInstance.post("/auth/logout");
-      setUser(null);
-      setChildProfiles([]);
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-  };
+    const logout = async () => {
+      try {
+        await axiosInstance.post("/auth/logout");
+      } catch (err) {
+        console.error("Logout failed", err);
+      } finally {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setUser(null);
+        setChildProfiles([]);
+      }
 
   // ✅ On first mount: restore session
   useEffect(() => {
