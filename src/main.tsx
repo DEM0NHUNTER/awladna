@@ -25,9 +25,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <BrowserRouter>
       <AuthProvider>
         <LanguageProvider>
-          <ErrorBoundary fallback="Authentication failed. Please log in again.">
             <App />
-          </ErrorBoundary>
         </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
