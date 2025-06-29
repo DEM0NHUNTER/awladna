@@ -54,7 +54,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Load child profiles
+  // ✅ Child profile loader
   const getChildProfiles = async () => {
     try {
       const res = await axiosInstance.get("/auth/child/");
@@ -89,17 +89,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Register without handling tokens
+  // ✅ Register without token logic
   const register = async (email: string, password: string, name?: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password, name });
-      // navigate("/verify-email"); // optional
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || "Registration failed");
     }
   };
 
-  // ✅ Logout: server + local cleanup
+  // ✅ Logout: clear state + tokens
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -113,12 +112,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // ✅ Restore session on mount
+  // ✅ On first load: restore session if tokens exist
   useEffect(() => {
-    refreshUser();
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
+
+    if (accessToken && refreshToken) {
+      refreshUser();
+    } else {
+      setLoading(false); // allow guest session
+    }
   }, []);
 
-  // ✅ Refresh user after token refresh
+  // ✅ Listen for token refresh events
   useEffect(() => {
     const handleRefetch = () => {
       refreshUser();
@@ -129,7 +135,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // ✅ Handle 401s by clearing and redirecting
+  // ✅ Handle 401 → redirect to login
   useEffect(() => {
     const handleUnauthorized = () => {
       localStorage.removeItem("access_token");
