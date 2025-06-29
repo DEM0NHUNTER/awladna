@@ -46,7 +46,7 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     const fetchChildInfo = async () => {
       try {
-        const res = await axiosInstance.get(`/auth/child/${childIdNum}`);
+        const res = await axiosInstance.get(`/api/chat/history/${childId}`);
         setChildInfo(res.data);
       } catch (err: any) {
         console.error("Failed to fetch child info", err.response?.data ?? err);
