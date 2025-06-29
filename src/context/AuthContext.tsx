@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const login = async (email: string, password: string) => {
       try {
-        const res = await axiosInstance.post("/auth/login", { email, password });
+        const res = await axiosInstance.post("/auth/login/", { email, password });
         const { access_token, refresh_token } = res.data;
 
         localStorage.setItem("access_token", access_token);
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (profiles.length > 0) {
           navigate(`/chat/${profiles[0].child_id}`);
         } else {
-          navigate("/profile");
+          navigate("/profile/");
         }
       } catch (error: any) {
         console.error("Login error", error);
@@ -88,7 +88,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const register = async (email: string, password: string, name?: string) => {
     try {
-      const res = await axiosInstance.post("/auth/register", { email, password, name });
+      const res = await axiosInstance.post("/auth/register/", { email, password, name });
       const { access_token } = res.data;
       localStorage.setItem("access_token", access_token);
 //       navigate("/verify-email");
@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      await axiosInstance.post("/auth/logout");
+      await axiosInstance.post("/auth/logout/");
     } finally {
       localStorage.removeItem("access_token");
       setUser(null);
