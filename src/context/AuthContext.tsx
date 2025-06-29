@@ -114,18 +114,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // ✅ On first load: restore session if tokens exist
     useEffect(() => {
-      const accessToken = localStorage.getItem("access_token");
-      const refreshToken = localStorage.getItem("refresh_token");
+        const accessToken = localStorage.getItem("access_token");
+        const refreshToken = localStorage.getItem("refresh_token");
 
       // ✅ Only fetch user if both tokens exist and are non-empty strings
-      if (typeof accessToken === "string" && typeof refreshToken === "string" &&
-          accessToken.length > 10 && refreshToken.length > 10) {
-        refreshUser();
-      } else {
-        // ✅ No tokens → guest mode
-        setLoading(false);
-      }
-    }, []);
+        if (accessToken && refreshToken) {
+          // ✅ Validate basic token shape (e.g. JWT format)
+          const looksValid = accessToken.split(".").length === 3 && refreshToken.split(".").length === 3;
+
+          if (looksValid) {
+            refreshUser();
+          } else {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
 
   // ✅ Listen for token refresh events
   useEffect(() => {
