@@ -111,19 +111,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   };
 
-    useEffect(() => {
-      const initialize = async () => {
-        const access = localStorage.getItem("access_token");
-        const refresh = localStorage.getItem("refresh_token");
-        if (access && refresh) {
-          await refreshUser();
-        } else {
-          setLoading(false); // Treat as guest
-        }
-      };
-      initialize();
-    }, []);
-
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        await refreshUser();
+      } else {
+        setLoading(false);
+      }
+    };
+    initializeAuth();
+  }, []);
 
   return (
     <AuthContext.Provider
