@@ -113,16 +113,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ✅ On first load: restore session if tokens exist
-  useEffect(() => {
-    const accessToken = localStorage.getItem("access_token");
-    const refreshToken = localStorage.getItem("refresh_token");
+    useEffect(() => {
+      const accessToken = localStorage.getItem("access_token");
+      const refreshToken = localStorage.getItem("refresh_token");
 
-    if (accessToken && refreshToken) {
-      refreshUser();
-    } else {
-      setLoading(false); // allow guest session
-    }
-  }, []);
+      // ✅ Only fetch user if both tokens exist and are non-empty strings
+      if (typeof accessToken === "string" && typeof refreshToken === "string" &&
+          accessToken.length > 10 && refreshToken.length > 10) {
+        refreshUser();
+      } else {
+        // ✅ No tokens → guest mode
+        setLoading(false);
+      }
+    }, []);
 
   // ✅ Listen for token refresh events
   useEffect(() => {
