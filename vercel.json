@@ -8,10 +8,13 @@
   ],
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://awladna-api-1017471338215.us-west1.run.app/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "https://awladna-api-1017471338215.us-west1.run.app/api/ $1"
-    },
-        {"source": "/(.*)", "destination": "/dist/index.html"}
+    }
   ],
   "headers": [
     {
