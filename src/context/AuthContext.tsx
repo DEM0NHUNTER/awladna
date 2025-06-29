@@ -113,12 +113,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // ✅ On first load: restore session if tokens exist
-    useEffect(() => {
-        const accessToken = localStorage.getItem("access_token");
-        const refreshToken = localStorage.getItem("refresh_token");
+  useEffect(() => {
+    const accessToken = localStorage.getItem("access_token");
+    const refreshToken = localStorage.getItem("refresh_token");
 
       // ✅ Only fetch user if both tokens exist and are non-empty strings
-        if (accessToken && refreshToken) {
+       if (accessToken && refreshToken) {
           // ✅ Validate basic token shape (e.g. JWT format)
           const looksValid = accessToken.split(".").length === 3 && refreshToken.split(".").length === 3;
 
@@ -175,7 +175,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       {!loading && children}
     </AuthContext.Provider>
   );
-}
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
