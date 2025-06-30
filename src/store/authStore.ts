@@ -1,15 +1,21 @@
+// store/authStore.ts
 import { create } from 'zustand';
 
 interface AuthState {
-  user: any;
   token: string | null;
+  user: any;
+  initialize: () => void;
   login: (token: string, user: any) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
+  token: null,
   user: null,
-  token: localStorage.getItem('token'),
+  initialize: () => {
+    const storedToken = localStorage.getItem('token');
+    set({ token: storedToken });
+  },
   login: (token, user) => {
     localStorage.setItem('token', token);
     set({ token, user });
