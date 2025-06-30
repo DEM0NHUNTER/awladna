@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import apiClient from '../services/api';
 import { ChildProfile } from '../types/child-profile.types';
-import ChildProfileList from '../components/ChildProfileList';
+import { ChildProfileList } from '../components/ChildProfileList';
 
 const ChildProfilePage = () => {
   const [children, setChildren] = useState<ChildProfile[]>([]);
