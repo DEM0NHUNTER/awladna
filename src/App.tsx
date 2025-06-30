@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
 import ChildProfilePage from './pages/ChildProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
+import NavBar from './components/NavBar'; // Correct import [[2]]
 
 function App() {
   const { token } = useAuthStore();
