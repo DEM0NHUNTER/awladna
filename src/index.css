@@ -1,41 +1,23 @@
-@import "tailwindcss";
-/* Base Layer for Global Variables */
-@layer base {
-  /* ===== Default Theme ===== */
-  :root {
-    --color-primary: #3b82f6;        /* blue-500 */
-    --color-secondary: #8b5cf6;      /* purple-500 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-    /* Light Theme */
-    --color-bg: #f9fafb;
-    --color-text: #111827;
-    --color-card: #ffffff;
-    --color-border: #e5e7eb;
-  }
+body {
+  @apply bg-gray-100;
+}
 
-  /* ===== Arabic Theme (RTL) ===== */
-  :root[dir="rtl"] {
-    --color-primary: #10b981;        /* green-500 */
-    --color-secondary: #f97316;      /* orange-500 */
-  }
+.auth-container {
+  @apply max-w-md mx-auto mt-10 p-6 bg-white rounded-lg shadow-md;
+}
 
-  /* ===== Dashboard Theme in English ===== */
-  :root .dashboard[lang="en"] {
-    --color-primary: #10b981;
-    --color-secondary: #f97316;
-  }
+.error {
+  @apply text-red-500 text-sm mb-2;
+}
 
-  /* ===== Analytics Theme in Arabic ===== */
-  :root .analytics[lang="ar"] {
-    --color-primary: #ef4444;
-    --color-secondary: #f59e0b;
-  }
+input {
+  @apply w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
 
-  /* ===== Dark Theme ===== */
-  .dark {
-    --color-bg: #111827;
-    --color-text: #f9fafb;
-    --color-card: #1f2937;
-    --color-border: #374151;
-  }
+button {
+  @apply w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200;
 }
