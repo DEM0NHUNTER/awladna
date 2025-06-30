@@ -1,44 +1,65 @@
-import React, { ReactNode, useEffect } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
+// src/components/NavBar.tsx
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
 
-interface AnimatedSectionProps {
-  children: ReactNode;
-  animation?: string;
-  duration?: number;
-  delay?: number;
-  once?: boolean;
-}
+const NavBar = () => {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
 
-const AnimatedSection: React.FC<AnimatedSectionProps> = ({
-  children,
-  animation = 'fade-up',
-  duration = 700,
-  delay = 0,
-  once = true,
-}) => {
-  useEffect(() => {
-    AOS.init({
-      duration,
-      delay,
-      once,
-      easing: 'ease-out-cubic',
-      disable: 'phone',
-    });
-    AOS.refresh();
-  }, [duration, delay, once]);
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <div
-      data-aos={animation}
-      data-aos-duration={duration}
-      data-aos-delay={delay}
-      data-aos-once={once}
-      className="my-8"
-    >
-      {children}
-    </div>
+    <nav className="bg-blue-600 p-4">
+      <div className="max-w-6xl mx-auto flex justify-between items-center">
+        <Link to="/" className="text-white text-2xl font-semibold">
+          Parenting Assistant
+        </Link>
+
+        <div className="flex space-x-4">
+          {user ? (
+            <>
+              <Link
+                to="/chat"
+                className="text-white hover:bg-blue-700 px-3 py-2 rounded"
+              >
+                Chat
+              </Link>
+              <Link
+                to="/profiles"
+                className="text-white hover:bg-blue-700 px-3 py-2 rounded"
+              >
+                Profiles
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="text-white hover:bg-red-600 px-3 py-2 rounded"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-white hover:bg-blue-700 px-3 py-2 rounded"
+              >
+                Login
+              </Link>
+              <Link
+                to="/register"
+                className="text-white hover:bg-blue-700 px-3 py-2 rounded"
+              >
+                Register
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </nav>
   );
 };
 
-export default AnimatedSection;
+export default NavBar;
