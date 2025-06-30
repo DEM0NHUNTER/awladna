@@ -5,7 +5,7 @@ import ChatPage from './pages/ChatPage';
 import ChildProfilePage from './pages/ChildProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
 import NavBar from './components/NavBar'; // Correct import [[2]]
-
+import PrivateRoute from './components/PrivateRoute'; // Ensure you have a PrivateRoute component
 function App() {
   const { token } = useAuthStore();
 
