@@ -10,8 +10,7 @@ function App() {
   const { token } = useAuthStore();
 
   return (
-    <Router>
-      <NavBar />
+        <NavBar />
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -20,7 +19,6 @@ function App() {
         <Route path="/profiles" element={token ? <ChildProfilePage /> : <LoginPage />} />
         {/* Add other routes */}
       </Routes>
-    </Router>
   );
 }
 
