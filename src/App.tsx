@@ -10,15 +10,15 @@ function App() {
   const { token } = useAuthStore();
 
   return (
-    <Router>
-      <NavBar />
+      <Routes>
+        <NavBar />
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/chat"element={<PrivateRoute><ChatPage /></PrivateRoute>}/>
         <Route path="/profiles" element={token ? <ChildProfilePage /> : <LoginPage />} />
         {/* Add other routes */}
-    </Router>
+      </Routes>
   );
 }
 
