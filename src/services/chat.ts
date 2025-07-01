@@ -2,7 +2,7 @@ import apiClient from "@/services/api";
 import { ChatMessage } from "@/types/chat";
 
 export const sendMessage = async (token: string, message: string, childId: number) => {
-  const response = await apiClient.post("/chat", {
+  const response = await apiClient.post("/api/auth/chat", {
     message,
     child_id: childId
   });
@@ -15,7 +15,8 @@ export const sendMessage = async (token: string, message: string, childId: numbe
   };
 };
 
+
 export const getChatHistory = async (token: string, childId: number) => {
-  const response = await apiClient.get(`/chat/history/${childId}`);
+  const response = await apiClient.get(`/api/auth/chat/history/${childId}`);
   return response.data.messages || [];
 };
