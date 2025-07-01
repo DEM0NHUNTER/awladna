@@ -1,81 +1,137 @@
-import React, { useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import axiosInstance from "../api/axiosInstance";
+// src/pages/RegisterPage.tsx
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/authStore';
+import { register } from '../services/auth.service';
 
-const ResetPassword: React.FC = () => {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+export const RegisterPage = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login: storeLogin } = useAuthStore();
   const navigate = useNavigate();
-
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
 
-    if (!token) {
-      setError("Reset token is missing.");
-      return;
-    }
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      setError("Passwords do not match");
       return;
     }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    setLoading(true);
+    setError('');
 
     try {
-      await axiosInstance.post("/auth/reset-password", { token, password });
-      setStatus("success");
-      setTimeout(() => {
-        navigate("/login");
-      }, 3000);
-    } catch {
-      setStatus("error");
-      setError("Failed to reset password.");
+      const { token, user } = await register(email, password);
+      storeLogin(token, user);
+      navigate('/profiles');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4 bg-white shadow rounded">
-      <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      {status === "success" && (
-        <p className="text-green-600 mb-4">
-          Password reset successfully. Redirecting to login...
-        </p>
-      )}
-      <label className="block mb-2">
-        New Password
-        <input
-          type="password"
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          autoComplete="new-password"
-        />
-      </label>
-      <label className="block mb-4">
-        Confirm Password
-        <input
-          type="password"
-          className="w-full p-2 border border-gray-300 rounded mt-1"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          autoComplete="new-password"
-        />
-      </label>
-      <button
-        type="submit"
-        className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-      >
-        Reset Password
-      </button>
-    </form>
+    <div className="min-h-screen flex items-center justify-center bg-[#f3f6fd] py-12 px-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold text-gray-900">Create Account</h2>
+            <p className="mt-2 text-gray-600">Join us and start your parenting journey</p>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center">
+                <svg className="h-5 w-5 text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-red-600">{error}</span>
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="mt-1 text-xs text-gray-500">Minimum 6 characters</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 px-4 rounded-lg text-white ${
+                loading
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } transition duration-200 font-medium`}
+            >
+              {loading ? 'Registering...' : 'Register'}
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-6 text-center">
+          <span className="px-2 bg-white text-gray-500">Already have an account?</span>
+          <div className="mt-4">
+            <Link
+              to="/login"
+              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            >
+              Sign in to existing account
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default ResetPassword;
+export default RegisterPage;
