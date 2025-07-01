@@ -9,18 +9,21 @@ const Register: React.FC = () => {
   const { register, loading, error } = useAuth();
   const navigate = useNavigate();
   const [verificationSent, setVerificationSent] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setLocalError('Passwords do not match');
       return;
     }
 
     await register(email, password);
-    navigate('/login'); // ✅ Direct login after registration
+    setVerificationSent(true);
+  };
 
+  // ✅ this conditional JSX must be here
   if (verificationSent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
