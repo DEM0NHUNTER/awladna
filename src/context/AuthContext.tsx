@@ -45,7 +45,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const { data } = await axiosInstance.post<{ token: string; user: User }>(
-        '/auth/login/',
+        '/auth/login',
         { email, password }
       );
       console.log("LOGIN RESPONSE", data);
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     try {
       const { data } = await axiosInstance.post<{ token: string; user: User }>(
-        '/auth/register/',
+        '/auth/register',
         { email, password }
       );
       console.log("LOGIN RESPONSE", data);
