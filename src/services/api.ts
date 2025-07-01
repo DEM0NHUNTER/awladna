@@ -1,59 +1,101 @@
-import axios from 'axios'
-import apiClient from '../api/axiosInstance';
+// src/services/api.ts
+import apiClient from "../api/axiosInstance";
 
-const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
-  withCredentials: true,
-})
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 
-export const setAuthToken = (token: string | null) => {
-  if (token) {
-    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
-  } else {
-    delete apiClient.defaults.headers.common['Authorization']
-  }
+export interface User {
+  id: number;
+  email: string;
+  name?: string;
+  picture?: string;
+  role: string;
+  is_verified: boolean;
+  created_at: string;
+  updated_at?: string;
 }
 
-// Auth endpoints
-export const login = async (email: string, password: string) => {
-  const response = await apiClient.post('/auth/login', { email, password })
-  return response.data
-}
-
-export const register = async (email: string, password: string) => {
-  const response = await apiClient.post('/auth/register', { email, password })
-  return response.data
-}
-
-// Chat endpoints
-export const sendMessage = async (token: string, message: string, childId: number) => {
-  setAuthToken(token)
-  const response = await apiClient.post('/chat', { message, child_id: childId })
-  return response.data
-}
-
-export const getChatHistory = async (token: string, childId: number) => {
-  setAuthToken(token)
-  const res = await apiClient.get(`/chat/history/${childId}`)
-  return res.data
-}
-
-// Child profile endpoints
-export const getChildProfiles = async () => {
-  const res = await apiClient.get('/auth/child');
-  return res.data;            // Array of profiles
+export const login = async (
+  email: string,
+  password: string
+): Promise<{ token: string; user: User }> => {
+  const { data } = await apiClient.post("/auth/login", { email, password });
+  return data;
 };
 
-export const createChildProfile = async (data: any) => {
-  const res = await apiClient.post('/auth/child', data);
-  return res.data;            // Created profile
+export const register = async (
+  email: string,
+  password: string
+): Promise<{ token: string; user: User }> => {
+  const { data } = await apiClient.post("/auth/register", { email, password });
+  return data;
 };
 
-export const updateChildProfile = async (childId: number, data: any) => {
-  const res = await apiClient.put(`/auth/child/${childId}`, data);
-  return res.data;            // Updated profile
+export const logout = async (): Promise<void> => {
+  await apiClient.post("/auth/logout");
 };
 
-export const deleteChildProfile = async (childId: number) => {
+// ─── Child Profiles ────────────────────────────────────────────────────────────
+
+export interface ChildProfile {
+  child_id: number;
+  name: string;
+  age: number;
+  gender: "Male" | "Female";
+  school?: string;
+  challenges?: string;
+}
+
+export const getChildProfiles = async (): Promise<ChildProfile[]> => {
+  const { data } = await apiClient.get("/auth/child");
+  return data;
+};
+
+export const createChildProfile = async (
+  profile: Omit<ChildProfile, "child_id">
+): Promise<ChildProfile> => {
+  const { data } = await apiClient.post("/auth/child", profile);
+  return data;
+};
+
+export const updateChildProfile = async (
+  childId: number,
+  profile: Omit<ChildProfile, "child_id">
+): Promise<ChildProfile> => {
+  const { data } = await apiClient.put(`/auth/child/${childId}`, profile);
+  return data;
+};
+
+export const deleteChildProfile = async (
+  childId: number
+): Promise<void> => {
   await apiClient.delete(`/auth/child/${childId}`);
+};
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+export interface ChatHistoryEntry {
+  id: number;
+  user_input: string;
+  chatbot_response: string;
+  timestamp: string;
+}
+
+export const getChatHistory = async (
+  childId: number
+): Promise<ChatHistoryEntry[]> => {
+  const { data } = await apiClient.get(`/chat/history/${childId}`);
+  return data;
+};
+
+export const sendMessage = async (
+  childId: number,
+  message: string,
+  context?: string
+): Promise<{ response: string }> => {
+  const { data } = await apiClient.post("/chat", {
+    child_id: childId,
+    message,
+    context,
+  });
+  return data;
 };

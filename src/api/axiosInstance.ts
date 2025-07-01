@@ -1,25 +1,43 @@
+// src/api/axiosInstance.ts
 import axios from "axios";
 
+// Ensure baseURL is always HTTPS
+let baseURL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+if (baseURL.startsWith("http://")) {
+  baseURL = baseURL.replace(/^http:/, "https:");
+}
+
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+  baseURL,
   headers: {
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
-// ✅ Attach Bearer token to all requests EXCEPT public ones
+// Attach Bearer token to all non‑public requests
 apiClient.interceptors.request.use((config) => {
-  const publicRoutes = ["/auth/register", "/auth/login", "/auth/verify-email"];
-  const isPublic = publicRoutes.some(route => config.url?.includes(route));
+  // Public routes that don’t require auth
+  const publicRoutes = [
+    "/auth/register",
+    "/auth/login",
+    "/auth/verify-email",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+  ];
+  const isPublic = publicRoutes.some((route) =>
+    config.url?.startsWith(route)
+  );
 
   if (!isPublic) {
     const token = localStorage.getItem("access_token");
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
+      };
     }
   }
-
   return config;
 });
 
