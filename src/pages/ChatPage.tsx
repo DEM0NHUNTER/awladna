@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { sendMessage, getChatHistory } from "@/services/chat";
-import { useChildProfiles } from "@/hooks/useChildProfiles";
+import { useChildProfiles } from "@/hooks/useChildProfile";
 import apiClient from "@/services/api";
 import { useNavigate } from "react-router-dom";
 
