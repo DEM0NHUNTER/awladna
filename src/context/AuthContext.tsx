@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (token) {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         try {
-          const { data } = await axiosInstance.get<{ user: User }>('/auth/me/');
+          const { data } = await axiosInstance.get<{ user: User }>('/auth/me');
           setUser(data.user);
         } catch {
           localStorage.removeItem('token');
