@@ -10,7 +10,10 @@ export const login = async (email: string, password: string) => {
   return data;
 };
 
-export const register = async (userData: LoginData) => {
-  const { data } = await apiClient.post('auth/register', userData);
+export const register = async (email: string, password: string) => {
+  const { data } = await apiClient.post('/api/auth/register', {
+    email,
+    password
+  });
   return data;
 };
