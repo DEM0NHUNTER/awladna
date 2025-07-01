@@ -11,7 +11,7 @@ export const login = async (email: string, password: string) => {
 };
 
 export const register = async (email: string, password: string) => {
-  const { data } = await apiClient.post('/api/auth/register', {
+  const { data } = await apiClient.post('/auth/register', {
     email,
     password
   });

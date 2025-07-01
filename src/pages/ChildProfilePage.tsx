@@ -16,7 +16,7 @@ const ChildProfilePage = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const response = await apiClient.get('/api/child_profile');
+        const response = await apiClient.get('/child_profile');
         setChildren(response.data);
       } catch (err: any) {
         setError(err.message || 'Failed to load profiles');
