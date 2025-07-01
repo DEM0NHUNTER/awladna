@@ -16,7 +16,6 @@ interface AuthContextType {
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -49,6 +48,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         '/auth/login',
         { email, password }
       );
+      console.log("LOGIN RESPONSE", data);
       localStorage.setItem('token', data.token);
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data.user);
@@ -65,6 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         '/auth/register',
         { email, password }
       );
+      console.log("LOGIN RESPONSE", data);
       localStorage.setItem('token', data.token);
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data.user);
