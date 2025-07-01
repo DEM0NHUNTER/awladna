@@ -6,7 +6,7 @@ import  ProtectedRoute  from './components/ProtectedRoute';
 // Pages
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
-import Chat from './pages/Chat';
+import Chat from './pages/ChatPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ChildProfilePage from './pages/ChildProfilePage';
