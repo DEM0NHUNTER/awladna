@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import apiClient from "@/services/api";
+import { useAuth } from "@/context/AuthContext"; // Ensure this path is correct
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");

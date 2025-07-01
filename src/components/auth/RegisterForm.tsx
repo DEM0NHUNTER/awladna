@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import apiClient from "@/services/api";
+import { useAuth } from "@/context/AuthContext"; // Ensure this path is correct
 
 const RegisterForm = () => {
   const [email, setEmail] = useState("");
