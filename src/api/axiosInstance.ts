@@ -1,7 +1,6 @@
 // src/api/axiosInstance.ts
 import axios from "axios";
 
-// Ensure baseURL is always HTTPS
 let baseURL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
 if (baseURL.startsWith("http://")) {
   baseURL = baseURL.replace(/^http:/, "https:");
@@ -9,15 +8,12 @@ if (baseURL.startsWith("http://")) {
 
 const apiClient = axios.create({
   baseURL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
   withCredentials: true,
 });
 
-// Attach Bearer token to all non‑public requests
 apiClient.interceptors.request.use((config) => {
-  // Public routes that don’t require auth
+  // Public routes
   const publicRoutes = [
     "/auth/register",
     "/auth/login",
@@ -25,11 +21,9 @@ apiClient.interceptors.request.use((config) => {
     "/auth/forgot-password",
     "/auth/reset-password",
   ];
-  const isPublic = publicRoutes.some((route) =>
-    config.url?.startsWith(route)
-  );
-
+  const isPublic = publicRoutes.some((r) => config.url?.startsWith(r));
   if (!isPublic) {
+    // 🔑 Read the same key you wrote in AuthContext
     const token = localStorage.getItem("token");
     if (token) {
       config.headers = {
