@@ -9,11 +9,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://awladna-api-1017471338215.us-west1.run.app/ :path*"
+      "destination": "https://awladna-api-1017471338215.us-west1.run.app/ $1"
     },
     {
       "source": "/auth/:path*",
-      "destination": "https://awladna-api-1017471338215.us-west1.run.app/auth/ :path*"
+      "destination": "https://awladna-api-1017471338215.us-west1.run.app/auth/ $1"
     }
   ],
   "headers": [
