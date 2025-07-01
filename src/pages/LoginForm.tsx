@@ -1,25 +1,36 @@
-// src/pages/LoginPage.tsx
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { login } from '../services/auth.service';
+import React, { useState } from "react";
+import { useAuth } from '../../context/AuthContext';
+import { useNavigate, Link } from "react-router-dom";
 
-export const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login: storeLogin } = useAuthStore();
+const LoginForm: React.FC = () => {
+  const { login } = useAuth();
   const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setLoading(true);
     try {
-      const { token, user } = await login(email, password);
-      storeLogin(token, user);
-      navigate('/chat');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed');
+      await login(email, password);
+    } catch {
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Placeholder handlers for social login
+  const handleGoogleSignIn = () => {
+    alert("Google sign-in not implemented yet.");
+  };
+  const handleFacebookSignIn = () => {
+    alert("Facebook sign-in not implemented yet.");
   };
 
   return (
@@ -142,4 +153,5 @@ export const LoginPage = () => {
     </div>
   );
 };
-export default LoginPage;
+
+export default LoginForm;
