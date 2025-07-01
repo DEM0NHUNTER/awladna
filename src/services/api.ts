@@ -18,7 +18,7 @@ export const login = async (
   email: string,
   password: string
 ): Promise<{ token: string; user: User }> => {
-  const { data } = await apiClient.post("/auth/login", { email, password });
+  const { data } = await apiClient.post("/auth/login/", { email, password });
   return data;
 };
 
@@ -46,14 +46,14 @@ export interface ChildProfile {
 }
 
 export const getChildProfiles = async (): Promise<ChildProfile[]> => {
-  const { data } = await apiClient.get("/auth/child/");
+  const { data } = await apiClient.get("/auth/child");
   return data;
 };
 
 export const createChildProfile = async (
   profile: Omit<ChildProfile, "child_id">
 ): Promise<ChildProfile> => {
-  const { data } = await apiClient.post("/auth/child/", profile);
+  const { data } = await apiClient.post("/auth/child", profile);
   return data;
 };
 
@@ -92,7 +92,7 @@ export const sendMessage = async (
   message: string,
   context?: string
 ): Promise<{ response: string }> => {
-  const { data } = await apiClient.post("/chat", {
+  const { data } = await apiClient.post("/chat/", {
     child_id: childId,
     message,
     context,
