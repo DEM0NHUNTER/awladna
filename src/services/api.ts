@@ -23,7 +23,7 @@ export const login = async (
   expires_in: number;
   user: User;
 }> => {
-  const { data } = await axiosInstance.post("/auth/login/", { email, password });
+  const { data } = await axiosInstance.post("/auth/login", { email, password });
   return data;
 };
 
