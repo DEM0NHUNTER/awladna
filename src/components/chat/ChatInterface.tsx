@@ -10,7 +10,7 @@ const ChatInterface: React.FC<{ childId: number }> = ({ childId }) => {
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       const data = await getChatHistory(token!, childId);
       setHistory(data.slice(-10));  // Keep only last 10 messages
     } catch (error) {
@@ -29,7 +29,7 @@ const ChatInterface: React.FC<{ childId: number }> = ({ childId }) => {
     if (!message.trim()) return;
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem('token');
       const response = await sendMessage(token!, message, childId);
       setHistory([...history, { user: message, bot: response.response }]);
       setMessage('');

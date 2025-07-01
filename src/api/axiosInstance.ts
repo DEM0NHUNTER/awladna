@@ -14,6 +14,9 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use((config) => {
+  const publicRoutes = ["/auth/register","/auth/login", /* … */];
+  const isPublic = publicRoutes.some((r) => config.url?.startsWith(r));
+
   // List of public routes that don't need Authorization header
   const publicRoutes = [
     "/auth/register",
