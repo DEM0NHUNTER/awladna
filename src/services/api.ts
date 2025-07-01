@@ -17,7 +17,12 @@ export interface User {
 export const login = async (
   email: string,
   password: string
-): Promise<{ token: string; user: User }> => {
+): Promise<{
+  token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: User;
+}> => {
   const { data } = await axiosInstance.post("/auth/login/", { email, password });
   return data;
 };
@@ -25,13 +30,18 @@ export const login = async (
 export const register = async (
   email: string,
   password: string
-): Promise<{ token: string; user: User }> => {
+): Promise<{
+  token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: User;
+}> => {
   const { data } = await axiosInstance.post("/auth/register/", { email, password });
   return data;
 };
 
 export const logout = async (): Promise<void> => {
-  await axiosInstance.post("/auth/logout");
+  await axiosInstance.post("/auth/logout/");
 };
 
 // ─── Child Profiles ────────────────────────────────────────────────────────────
