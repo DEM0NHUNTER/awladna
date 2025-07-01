@@ -21,7 +21,7 @@ export const LoginPage = () => {
     try {
       const { token, user } = await login(email, password);
       storeLogin(token, user);
-      navigate('/chat');
+      navigate('/ChatPage'); // Redirect to child profile page after login
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed');
     } finally {

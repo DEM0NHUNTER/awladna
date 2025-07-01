@@ -34,7 +34,7 @@ const ChildProfilePage = () => {
     if (!window.confirm('Are you sure you want to delete this profile?')) return;
 
     try {
-      await apiClient.delete(`/api/child_profile/${childId}`);
+      await apiClient.delete(`/auth/child_profile/${childId}`);
       setChildren(children.filter(child => child.child_id !== childId));
     } catch (err) {
       setError('Failed to delete profile');
