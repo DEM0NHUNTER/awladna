@@ -34,26 +34,26 @@ export const sendMessage = async (token: string, message: string, childId: numbe
 
 export const getChatHistory = async (token: string, childId: number) => {
   setAuthToken(token)
-  const response = await apiClient.get(`/chat/history/${childId}`)
-  return response.data
+  const res = await apiClient.get(`/chat/history/${childId}`)
+  return res.data
 }
 
 // Child profile endpoints
 export const getChildProfiles = async () => {
-  const response = await apiClient.get('/child-profiles');
-  return response.data;               // List<ChildProfile>
+  const res = await apiClient.get('/auth/child');
+  return res.data;            // Array of profiles
 };
 
-export const createChildProfile = async (data: Omit<ChildProfile, 'child_id'>) => {
-  const response = await apiClient.post('/child-profiles', data);
-  return response.data;               // Created ChildProfile
+export const createChildProfile = async (data: any) => {
+  const res = await apiClient.post('/auth/child', data);
+  return res.data;            // Created profile
 };
 
-export const updateChildProfile = async (childId: number, data: Omit<ChildProfile, 'child_id'>) => {
-  const response = await apiClient.put(`/child-profiles/${childId}`, data);
-  return response.data;               // Updated ChildProfile
+export const updateChildProfile = async (childId: number, data: any) => {
+  const res = await apiClient.put(`/auth/child/${childId}`, data);
+  return res.data;            // Updated profile
 };
 
 export const deleteChildProfile = async (childId: number) => {
-  await apiClient.delete(`/child-profiles/${childId}`);
+  await apiClient.delete(`/auth/child/${childId}`);
 };
