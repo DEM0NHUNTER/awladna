@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
-
+import apiclient from '../services/api'; // Adjust the import based on your project structure
 interface AuthState {
   token: string | null;
   loading: boolean;
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const response = await axios.post('/auth/login', { email, password });
+      const response = await apiclient.post('/auth/login', { email, password });
       const { access_token } = response.data;
 
       setToken(access_token);
@@ -48,7 +48,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (email: string, password: string) => {
     setLoading(true);
     try {
-      await axios.post('/auth/register', { email, password });
+      await apiclient.post('/auth/register', { email, password });
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Registration failed');
