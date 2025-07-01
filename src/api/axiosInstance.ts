@@ -14,9 +14,6 @@ const axiosInstance = axios.create({
 });
 
 axiosInstance.interceptors.request.use((config) => {
-  const publicRoutes = ["/auth/register","/auth/login", /* … */];
-  const isPublic = publicRoutes.some((r) => config.url?.startsWith(r));
-
   // List of public routes that don't need Authorization header
   const publicRoutes = [
     "/auth/register",
@@ -26,8 +23,11 @@ axiosInstance.interceptors.request.use((config) => {
     "/auth/reset-password",
   ];
   const isPublic = publicRoutes.some((r) => config.url?.startsWith(r));
+
   if (!isPublic) {
     const token = localStorage.getItem("token");
+    // log out every request so you can inspect it in the browser console:
+    console.log(`[Auth Interceptor] ${config.method?.toUpperCase()} ${config.url} → token:`, token);
     if (token) {
       config.headers = {
         ...config.headers,
@@ -35,6 +35,7 @@ axiosInstance.interceptors.request.use((config) => {
       };
     }
   }
+
   return config;
 });
 
