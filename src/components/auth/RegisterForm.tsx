@@ -1,41 +1,29 @@
 import React, { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
+import apiClient from "@/services/api";
 
-const RegisterForm: React.FC = () => {
-  const { register } = useAuth();
-  const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-
+const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setError("");
+    setSuccess("");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
-      return;
-    }
-
-    setLoading(true);
     try {
-      await register(email, password);
-      navigate("/login");
-    } catch {
-      setError("Registration failed. Please try again.");
-    } finally {
-      setLoading(false);
+      const response = await apiClient.post("/auth/register", { email, password });
+      setSuccess(response.data.message || "Verification email sent");
+    } catch (err) {
+      setError(err.response?.data?.detail || "Registration failed");
     }
   };
 

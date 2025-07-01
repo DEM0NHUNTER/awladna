@@ -1,38 +1,24 @@
 import React, { useState } from "react";
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from "react-router-dom";
-import { useTranslation } from 'react-i18next';
+import { useNavigate } from "react-router-dom";
+import apiClient from "@/services/api";
 
-const LoginForm: React.FC = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
-
+const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-    try {
-      await login(email, password);
-    } catch {
-      setError("Invalid email or password");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setError("");
 
-  // Placeholder handlers for social login
-  const handleGoogleSignIn = () => {
-    alert("Google sign-in not implemented yet.");
-  };
-  const handleFacebookSignIn = () => {
-    alert("Facebook sign-in not implemented yet.");
+    try {
+      const response = await apiClient.post("/auth/login", { email, password });
+      localStorage.setItem("auth_token", response.data.access_token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError("Invalid email or password");
+    }
   };
 
   return (

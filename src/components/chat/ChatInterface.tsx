@@ -26,7 +26,10 @@ const ChatInterface: React.FC<{ childId: number }> = ({ childId }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (message.trim() === "") {
+      console.warn("Message cannot be empty");
+      return;
+    }
     setLoading(true);
     try {
       const token = localStorage.getItem('access_token');
