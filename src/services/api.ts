@@ -1,4 +1,5 @@
 import axios from 'axios'
+import apiClient from '../api/axiosInstance';
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
@@ -38,14 +39,21 @@ export const getChatHistory = async (token: string, childId: number) => {
 }
 
 // Child profile endpoints
-export const getChildProfiles = async (token: string) => {
-  setAuthToken(token)
-  const response = await apiClient.get('/child-profiles')
-  return response.data
-}
+export const getChildProfiles = async () => {
+  const response = await apiClient.get('/child-profiles');
+  return response.data;               // List<ChildProfile>
+};
 
-export const createChildProfile = async (token: string, data: any) => {
-  setAuthToken(token)
-  const response = await apiClient.post('/child-profiles', data)
-  return response.data
-}
+export const createChildProfile = async (data: Omit<ChildProfile, 'child_id'>) => {
+  const response = await apiClient.post('/child-profiles', data);
+  return response.data;               // Created ChildProfile
+};
+
+export const updateChildProfile = async (childId: number, data: Omit<ChildProfile, 'child_id'>) => {
+  const response = await apiClient.put(`/child-profiles/${childId}`, data);
+  return response.data;               // Updated ChildProfile
+};
+
+export const deleteChildProfile = async (childId: number) => {
+  await apiClient.delete(`/child-profiles/${childId}`);
+};

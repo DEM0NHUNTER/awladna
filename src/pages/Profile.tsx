@@ -1,44 +1,68 @@
-import React, { useRef, useState } from "react";
-import { useAuth } from "../context/AuthContext";
+// src/pages/Profile.tsx
+import React, { useRef, useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import {
+  getChildProfiles,
+  createChildProfile,
+  updateChildProfile,
+  deleteChildProfile,
+} from '../services/api';
+import ChildProfileForm from '../components/child/ChildProfileForm';
 
 interface Child {
-  id: number;
+  child_id: number;
   name: string;
   age: number;
-  gender: "Male" | "Female";
+  gender: 'Male' | 'Female';
   school?: string;
   challenges?: string;
 }
 
-const defaultAvatar = "https://ui-avatars.com/api/?name=User&background=000080&color=fff&size=128";
+const defaultAvatar = 'https://ui-avatars.com/api/?name=User&background=000080&color=fff&size=128';
 
 const Profile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [avatar, setAvatar] = useState<string>(defaultAvatar);
-  const [editingName, setEditingName] = useState(false);
-  const [name, setName] = useState(user?.name || "");
+
+  // Children state from API
   const [children, setChildren] = useState<Child[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Modal/form state
   const [showChildForm, setShowChildForm] = useState(false);
   const [childForm, setChildForm] = useState<Partial<Child>>({});
   const [editChildId, setEditChildId] = useState<number | null>(null);
+
+  // File input for avatar
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Avatar upload
+  // 1️⃣ Fetch all child profiles on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const data: Child[] = await getChildProfiles();
+        setChildren(data);
+      } catch (err: any) {
+        console.error(err);
+        setError('Failed to load children.');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Avatar handlers (unchanged)
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        setAvatar(ev.target?.result as string);
-      };
+      reader.onload = ev => setAvatar(ev.target?.result as string);
       reader.readAsDataURL(e.target.files[0]);
     }
   };
   const handleAvatarRemove = () => setAvatar(defaultAvatar);
 
-  // Name edit
-  const handleNameSave = () => setEditingName(false);
-
-  // Child form handlers
+  // Open modals
   const openAddChild = () => {
     setChildForm({});
     setEditChildId(null);
@@ -46,29 +70,62 @@ const Profile: React.FC = () => {
   };
   const openEditChild = (child: Child) => {
     setChildForm(child);
-    setEditChildId(child.id);
+    setEditChildId(child.child_id);
     setShowChildForm(true);
   };
-  const handleChildFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+
+  // Handle form input
+  const handleChildFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setChildForm({ ...childForm, [e.target.name]: e.target.value });
   };
-  const handleChildFormSave = () => {
-    if (!childForm.name || !childForm.age || !childForm.gender) return;
-    if (editChildId !== null) {
-      setChildren(children.map(c => c.id === editChildId ? { ...c, ...childForm } as Child : c));
-      } else {
-      setChildren([...children, { ...childForm, id: Date.now() } as Child]);
+
+  // 2️⃣ Save: create or update via API, then refresh list
+  const handleChildFormSave = async () => {
+    if (!childForm.name || !childForm.age || !childForm.gender) {
+      setError('Name, age, and gender are required.');
+      return;
     }
-    setShowChildForm(false);
-    setChildForm({});
-    setEditChildId(null);
+
+    try {
+      if (editChildId != null) {
+        await updateChildProfile(editChildId, childForm as any);
+      } else {
+        await createChildProfile(childForm as any);
+      }
+      // Refresh list
+      const data = await getChildProfiles();
+      setChildren(data);
+      setShowChildForm(false);
+      setChildForm({});
+      setEditChildId(null);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to save child profile.');
+    }
   };
-  const handleChildDelete = (id: number) => setChildren(children.filter(c => c.id !== id));
+
+  // 3️⃣ Delete via API, then update state
+  const handleChildDelete = async (child_id: number) => {
+    if (!confirm('Delete this child profile?')) return;
+    try {
+      await deleteChildProfile(child_id);
+      setChildren(children.filter(c => c.child_id !== child_id));
+    } catch (err) {
+      console.error(err);
+      setError('Failed to delete profile.');
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-2 md:px-0">
-      {/* User Info Card */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-8">
+      {error && (
+        <div className="bg-red-100 text-red-800 p-4 rounded mb-6">{error}</div>
+      )}
+
+      {/* User Info */}
+      <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center gap-8">
         <div className="relative">
           <img
             src={avatar}
@@ -76,13 +133,10 @@ const Profile: React.FC = () => {
             className="w-32 h-32 rounded-full object-cover border-4 border-[#000080]"
           />
           <button
-            className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg"
             onClick={() => fileInputRef.current?.click()}
-            title="Upload Photo"
+            className="absolute bottom-2 right-2 bg-blue-600 text-white rounded-full p-2"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            📷
             <input
               type="file"
               accept="image/*"
@@ -93,61 +147,23 @@ const Profile: React.FC = () => {
           </button>
           {avatar !== defaultAvatar && (
             <button
-              className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-lg"
               onClick={handleAvatarRemove}
-              title="Remove Photo"
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✖️
             </button>
           )}
         </div>
-        <div className="flex-1 w-full">
-          <h1 className="text-3xl font-bold mb-4">My Profile</h1>
-          <div className="mb-4">
-            <label className="block text-gray-700 font-semibold mb-1">Full Name</label>
-            {editingName ? (
-              <div className="flex items-center gap-2">
-                <input
-                  className="border rounded px-3 py-2 w-full"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                />
-                <button
-                  className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
-                  onClick={handleNameSave}
-                >
-                  Save
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  className="border rounded px-3 py-2 w-full bg-gray-100 cursor-default"
-                  value={name}
-                  readOnly
-                />
-                <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
-                  onClick={() => setEditingName(true)}
-                  title="Edit Name"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="mb-2">
-            <label className="block text-gray-700 font-semibold mb-1">Email Address</label>
-            <input
-              className="border rounded px-3 py-2 w-full bg-gray-100 cursor-default"
-              value={user?.email || ""}
-              readOnly
-            />
-          </div>
+
+        <div className="flex-1">
+          <h2 className="text-2xl font-bold mb-2">{user?.name}</h2>
+          <div className="text-gray-600 mb-1">{user?.email}</div>
+          <button
+            onClick={logout}
+            className="mt-2 text-sm text-red-600 underline"
+          >
+            Log out
+          </button>
         </div>
       </div>
 
@@ -156,55 +172,47 @@ const Profile: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">My Children</h2>
           <button
-            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-xl font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition"
             onClick={openAddChild}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-xl"
           >
             + Add Child
           </button>
         </div>
-        {children.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-            </div>
-            <p className="text-lg font-semibold text-gray-500 mb-2">No Children Added Yet</p>
-            <p className="text-gray-400 mb-4">Add your children's information to get personalized parenting advice</p>
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold"
-              onClick={openAddChild}
-            >
-              Add Your First Child
-            </button>
+
+        {loading ? (
+          <p>Loading…</p>
+        ) : children.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No children added yet.
           </div>
         ) : (
           <div className="space-y-4">
             {children.map(child => (
-              <div key={child.id} className="bg-gray-50 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between">
+              <div
+                key={child.child_id}
+                className="p-5 bg-gray-50 rounded-xl flex justify-between"
+              >
                 <div>
-                  <div className="font-bold text-lg mb-1">{child.name}</div>
-                  <div className="text-gray-700 text-sm mb-1">Age: {child.age} years old</div>
-                  <div className="text-gray-700 text-sm mb-1">Gender: {child.gender}</div>
-                  {child.school && <div className="text-gray-700 text-sm mb-1">School: {child.school}</div>}
-                  {child.challenges && <div className="text-gray-700 text-sm">Current Challenges: {child.challenges}</div>}
+                  <div className="font-bold">{child.name}</div>
+                  <div>Age: {child.age}</div>
+                  <div>Gender: {child.gender}</div>
+                  {child.school && <div>School: {child.school}</div>}
+                  {child.challenges && (
+                    <div>Challenges: {child.challenges}</div>
+                  )}
                 </div>
-                <div className="flex gap-2 mt-4 md:mt-0">
+                <div className="flex gap-2">
                   <button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg"
                     onClick={() => openEditChild(child)}
+                    className="px-3 py-1 bg-blue-500 text-white rounded"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    Edit
                   </button>
                   <button
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg"
-                    onClick={() => handleChildDelete(child.id)}
+                    onClick={() => handleChildDelete(child.child_id)}
+                    className="px-3 py-1 bg-red-500 text-white rounded"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    Delete
                   </button>
                 </div>
               </div>
@@ -215,97 +223,25 @@ const Profile: React.FC = () => {
 
       {/* Add/Edit Child Modal */}
       {showChildForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
-            {/* Close Button */}
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
-              onClick={() => setShowChildForm(false)}
-              aria-label="Close"
-            >
-              &times;
-            </button>
-            <h3 className="text-2xl font-bold mb-6">{editChildId !== null ? "Edit Child" : "Add Child"}</h3>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-1">Child's Name *</label>
-              <div className="relative">
-                <input
-                  className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-                  name="name"
-                  placeholder="Enter child's name"
-                  value={childForm.name || ""}
-                  onChange={handleChildFormChange}
-                />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                </span>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-1">Age *</label>
-              <div className="relative">
-                <input
-                  className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-                  name="age"
-                  type="number"
-                  min="0"
-                  placeholder="Enter age"
-                  value={childForm.age || ""}
-                  onChange={handleChildFormChange}
-                />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" /></svg>
-                </span>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-1">Gender *</label>
-              <select
-                className="border rounded-xl px-4 py-3 w-full focus:ring-2 focus:ring-blue-200"
-                name="gender"
-                value={childForm.gender || ""}
-                onChange={handleChildFormChange}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-              </select>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-1">School</label>
-              <div className="relative">
-                <input
-                  className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-                  name="school"
-                  placeholder="Enter school name"
-                  value={childForm.school || ""}
-                  onChange={handleChildFormChange}
-                />
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg>
-                </span>
-              </div>
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 font-semibold mb-1">Current Problems/Challenges</label>
-              <textarea
-                className="border rounded-xl px-4 py-3 w-full focus:ring-2 focus:ring-blue-200"
-                name="challenges"
-                placeholder="Describe any behavioral, academic, or social challenges"
-                value={childForm.challenges || ""}
-                onChange={handleChildFormChange}
-              />
-            </div>
-            <div className="flex gap-2 justify-end mt-6">
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">
+              {editChildId != null ? 'Edit Child' : 'New Child'}
+            </h3>
+            <ChildProfileForm
+              formData={childForm}
+              onChange={handleChildFormChange}
+            />
+            <div className="flex justify-end gap-2 mt-6">
               <button
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl"
                 onClick={() => setShowChildForm(false)}
+                className="px-4 py-2 bg-gray-200 rounded"
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold"
                 onClick={handleChildFormSave}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
               >
                 Save
               </button>
@@ -314,7 +250,6 @@ const Profile: React.FC = () => {
         </div>
       )}
     </div>
-  );
-};
+);
 
 export default Profile;
