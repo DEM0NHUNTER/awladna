@@ -56,14 +56,14 @@ export interface ChildProfile {
 }
 
 export const getChildProfiles = async (): Promise<ChildProfile[]> => {
-  const { data } = await axiosInstance.get("/auth/child/");
+  const { data } = await axiosInstance.get("/auth/child");
   return data;
 };
 
 export const createChildProfile = async (
   profile: Omit<ChildProfile, "child_id">
 ): Promise<ChildProfile> => {
-  const { data } = await axiosInstance.post("/auth/child/", profile);
+  const { data } = await axiosInstance.post("/auth/child", profile);
   return data;
 };
 
