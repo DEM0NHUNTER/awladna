@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', data.token);
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data.user);
-      navigate('/chat');
+      navigate('/profile');
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('token', data.token);
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
       setUser(data.user);
-      navigate('/chat');
+      navigate('/profile');
     } finally {
       setLoading(false);
     }

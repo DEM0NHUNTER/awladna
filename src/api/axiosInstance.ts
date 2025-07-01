@@ -30,7 +30,7 @@ apiClient.interceptors.request.use((config) => {
   );
 
   if (!isPublic) {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers = {
         ...config.headers,
