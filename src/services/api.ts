@@ -49,3 +49,4 @@ export const createChildProfile = async (token: string, data: any) => {
   const response = await apiClient.post('/child-profiles', data)
   return response.data
 }
+export default apiClient;
