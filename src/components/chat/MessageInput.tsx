@@ -6,12 +6,13 @@ interface MessageInputProps {
   sendMessage: () => void;
   isTyping: boolean;
   inputRef: React.RefObject<HTMLInputElement | null>;
+  dimmed?: boolean;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ input, setInput, sendMessage, isTyping, inputRef }) => (
+const MessageInput: React.FC<MessageInputProps> = ({ input, setInput, sendMessage, isTyping, inputRef, dimmed }) => (
   <div className="w-full px-0 md:px-8 pb-6">
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center bg-white rounded-full shadow-lg border border-gray-200 px-4 py-2 gap-2">
+      <div className={`flex items-center rounded-full border border-gray-200 px-4 py-2 gap-2 ${dimmed ? 'bg-transparent shadow-none' : 'bg-white shadow-lg'}`}>
         <input
           ref={inputRef}
           type="text"

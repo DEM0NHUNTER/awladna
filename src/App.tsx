@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 import ChildProfilePage from "./pages/Profile";
+import Feedback from './pages/Feedback';
 
 // Main App Component
 const App: React.FC = () => {
@@ -49,7 +50,7 @@ const App: React.FC = () => {
                   <Navbar />
           <main className="flex-grow bg-gray-50 p-4">
             <Routes>
-                      <Route path="/" element={<Login />} />
+                      <Route path="/" element={<Home />} />
                       <Route path="/home" element={<Home />} />
                       <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
@@ -58,6 +59,7 @@ const App: React.FC = () => {
                 <Route path="/profile" element={<Profile />} />
                       <Route path="/chat" element={<Chat />} />
                 <Route path="/child-profiles/:childId" element={<ChildProfilePage />} />
+                <Route path="/feedback" element={<Feedback />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

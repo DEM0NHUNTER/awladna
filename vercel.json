@@ -13,16 +13,16 @@
     },
     {
       "source": "/(.*)",
-      "destination": "https://awladna-api-1017471338215.us-west1.run.app/api/ $1"
+      "destination": "/index.html"
     }
   ],
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "https://awladna.vercel.app" },
-        { "key": "Access-Control-Allow-Methods", "value": "*" },
-        { "key": "Access-Control-Allow-Headers", "value": "*" }
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
       ]
     }
   ]

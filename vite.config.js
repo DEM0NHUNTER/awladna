@@ -20,9 +20,9 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "https://awladna-api-1017471338215.us‑west1.run.app",
+        target: "http://localhost:8080",
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },
