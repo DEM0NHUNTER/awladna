@@ -47,4 +47,7 @@ const ChildProfilePage: React.FC = () => {
           )}
         </div>
       </div>
-    </div>;
+    </div>
+    );
+}
+export default ChildProfilePage;
