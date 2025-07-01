@@ -1,30 +1,33 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+
+// Pages
+import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
+import Chat from './pages/Chat';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import ProtectedRoute from './components/ProtectedRoute';
+import ChildProfilePage from './pages/ChildProfilePage';
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={
-              <div className="p-8">
-                <h1 className="text-2xl font-bold">Dashboard</h1>
-                <p className="mt-4">You're successfully logged in!</p>
-              </div>
-            } />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/chat" element={<Chat />} />
+            <Route path="/child-profiles" element={<ChildProfilePage />} />
+            <Route path="/child-profiles/:id" element={<ChildProfilePage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
