@@ -36,7 +36,7 @@ export const register = async (
   expires_in: number;
   user: User;
 }> => {
-  const { data } = await axiosInstance.post("/auth/register/", { email, password });
+  const { data } = await axiosInstance.post("/auth/register", { email, password });
   return data;
 };
 
