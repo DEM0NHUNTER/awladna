@@ -1,75 +1,33 @@
-// front_end/src/App.tsx
-import React from "react";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import Header from "./components/layout/Header";
-import Navbar from "./components/layout/Navbar";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ProtectedRoute from './components/ProtectedRoute';
 
-import ErrorBoundary from "./components/ErrorBoundary";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Profile from "./pages/Profile";
-import VerifyEmail from "./pages/VerifyEmail";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
-import Chat from "./pages/Chat";
-import ChildProfilePage from "./pages/Profile";
-import Feedback from './pages/Feedback';
-
-// Main App Component
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <ErrorBoundary>
-        <div className="flex flex-col min-h-screen">
-          <Routes>
-            {/* All routes accessible without authentication */}
-            <Route
-              path="/login"
-              element={
-                <main className="flex-grow bg-gray-50 p-4">
-                  <Login />
-                </main>
-              }
-            />
-            <Route
-              path="/register"
-              element={
-                <main className="flex-grow bg-gray-50 p-4">
-                  <Register />
-                </main>
-              }
-            />
-            {/* All other routes with Navbar */}
-            <Route
-              path="*"
-              element={
-                <>
-                  <Navbar />
-          <main className="flex-grow bg-gray-50 p-4">
-            <Routes>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/home" element={<Home />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/profile" element={<Profile />} />
-                      <Route path="/chat" element={<Chat />} />
-                <Route path="/child-profiles/:childId" element={<ChildProfilePage />} />
-                <Route path="/feedback" element={<Feedback />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-                </>
-              }
-            />
-          </Routes>
-        </div>
-      </ErrorBoundary>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={
+              <div className="p-8">
+                <h1 className="text-2xl font-bold">Dashboard</h1>
+                <p className="mt-4">You're successfully logged in!</p>
+              </div>
+            } />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };
 

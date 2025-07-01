@@ -1,48 +1,78 @@
-import React, { createContext, useState, useEffect, useContext } from "react";
-import apiClient from "@/api/axiosInstance";
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import axios from 'axios';
 
-const AuthContext = createContext(null);
+interface AuthState {
+  token: string | null;
+  loading: boolean;
+  error: string | null;
+}
 
-const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem("auth_token") || "");
-  const [user, setUser] = useState(null);
+interface AuthContextType extends AuthState {
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  register: (email: string, password: string) => Promise<void>;
+}
 
-  const login = async (email, password) => {
-    const response = await apiClient.post("/auth/login", { email, password });
-    const { access_token } = response.data;
-    setToken(access_token);
-    localStorage.setItem("auth_token", access_token);
-    const decoded = JSON.parse(atob(access_token.split(".")[1]));
-    setUser(decoded);
-  };
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-  const logout = () => {
-    setToken("");
-    setUser(null);
-    localStorage.removeItem("auth_token");
-  };
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Set auth header for all axios requests
   useEffect(() => {
     if (token) {
-      const decoded = JSON.parse(atob(token.split(".")[1]));
-      setUser(decoded);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    } else {
+      delete axios.defaults.headers.common['Authorization'];
     }
   }, [token]);
 
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const response = await axios.post('/auth/login', { email, password });
+      const { access_token } = response.data;
+
+      setToken(access_token);
+      localStorage.setItem('token', access_token);
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Login failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      await axios.post('/auth/register', { email, password });
+      setError(null);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setToken(null);
+    localStorage.removeItem('token');
+  };
+
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, loading, error, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// ✅ Add this hook
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  const context = React.useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
-
-export { AuthContext, AuthProvider };
