@@ -11,11 +11,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle
-} from "@/components/ui/dialog";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from "@/components/ui/Dialog";
+import { Card, CardContent, CardTitle } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 
 interface ChildProfile {
   id: number;

@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.4",
+    "@heroicons/react": "^2.2.0",
     "@tailwindcss/vite": "^4.1.9",
     "axios": "^1.5.0",
     "date-fns": "^4.1.0",
