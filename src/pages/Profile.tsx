@@ -33,7 +33,7 @@ const Profile: React.FC = () => {
   const [editChild, setEditChild] = useState<ChildProfile | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    age: Number(formData.age),
+    age: "",
     gender: "male",
     behavioral_traits: "",
     emotional_state: "",
@@ -134,7 +134,7 @@ const Profile: React.FC = () => {
     setEditChild(null);
     setFormData({
       name: "",
-      age: Number(formData.age),
+      age: "",
       gender: "male",
       behavioral_traits: "",
       emotional_state: "",
@@ -198,7 +198,7 @@ const Profile: React.FC = () => {
             </div>
             <div>
               <Label>Age</Label>
-              <Input name="age" type="number" value={formData.age} onChange={handleFormChange} />
+              <Input name="age" type="number" min="1" max="18" value={formData.age} onChange={handleFormChange}/>
               {formErrors.age && <p className="text-sm text-red-500 mt-1">{formErrors.age}</p>}
             </div>
             <div>
