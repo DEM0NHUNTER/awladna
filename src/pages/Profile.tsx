@@ -25,12 +25,14 @@ import {
 } from "@/components/ui/Select";
 
 interface ChildProfile {
-  id: number;
+  child_id: number;
   name: string;
-  age: number;
+  birth_date: string;
   gender: string;
-  behavioral_traits?: string;
-  emotional_state?: string;
+  behavioral_patterns: Record<string, string>;
+  emotional_state: Record<string, string>;
+  created_at: string;
+  age: number;
 }
 
 const Profile: React.FC = () => {
@@ -40,10 +42,10 @@ const Profile: React.FC = () => {
   const [editChild, setEditChild] = useState<ChildProfile | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    age: "", // ✅ string for input
+    birth_date: "",
     gender: "male",
-    behavioral_traits: "",
-    emotional_state: "",
+    behavioral_patterns: { mood: "" },
+    emotional_state: { status: "" }
   });
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
@@ -63,7 +65,7 @@ const Profile: React.FC = () => {
   const validateForm = () => {
     const errors: { [key: string]: string } = {};
     if (!formData.name.trim()) errors.name = "Name is required.";
-    if (!formData.age || isNaN(Number(formData.age))) errors.age = "Valid age is required.";
+    if (!formData.birth_date) errors.birth_date = "Birth date is required.";
     return errors;
   };
 
@@ -71,6 +73,22 @@ const Profile: React.FC = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setFormErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleBehaviorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      behavioral_patterns: { ...prev.behavioral_patterns, mood: value }
+    }));
+  };
+
+  const handleEmotionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      emotional_state: { ...prev.emotional_state, status: value }
+    }));
   };
 
   const handleGenderChange = (value: string) => {
@@ -86,13 +104,16 @@ const Profile: React.FC = () => {
     }
 
     const payload = {
-      ...formData,
-      age: Number(formData.age), // ✅ important
+      name: formData.name,
+      birth_date: formData.birth_date,
+      gender: formData.gender,
+      behavioral_patterns: formData.behavioral_patterns,
+      emotional_state: formData.emotional_state
     };
 
     try {
       if (editChild) {
-        await axiosInstance.put(`/auth/child/${editChild.id}`, payload);
+        await axiosInstance.put(`/auth/child/${editChild.child_id}`, payload);
         toast.success("Profile updated!");
       } else {
         await axiosInstance.post("/auth/child/", payload);
@@ -103,16 +124,16 @@ const Profile: React.FC = () => {
       setEditChild(null);
       setFormData({
         name: "",
-        age: "",
+        birth_date: "",
         gender: "male",
-        behavioral_traits: "",
-        emotional_state: "",
+        behavioral_patterns: { mood: "" },
+        emotional_state: { status: "" }
       });
       await loadChildren();
       await refreshChildren();
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Error saving child:", err.response?.data || err.message);
       toast.error("Something went wrong while saving.");
-      console.error("Error saving child:", err);
     }
   };
 
@@ -133,10 +154,10 @@ const Profile: React.FC = () => {
     setEditChild(child);
     setFormData({
       name: child.name,
-      age: child.age.toString(),
+      birth_date: child.birth_date,
       gender: child.gender,
-      behavioral_traits: child.behavioral_traits || "",
-      emotional_state: child.emotional_state || "",
+      behavioral_patterns: child.behavioral_patterns,
+      emotional_state: child.emotional_state
     });
     setFormErrors({});
     setModalOpen(true);
@@ -146,10 +167,10 @@ const Profile: React.FC = () => {
     setEditChild(null);
     setFormData({
       name: "",
-      age: "",
+      birth_date: "",
       gender: "male",
-      behavioral_traits: "",
-      emotional_state: "",
+      behavioral_patterns: { mood: "" },
+      emotional_state: { status: "" }
     });
     setFormErrors({});
     setModalOpen(true);
@@ -169,7 +190,7 @@ const Profile: React.FC = () => {
           {children.length === 0 && <p className="text-sm text-gray-500">No profiles yet.</p>}
           {children.map((child) => (
             <motion.div
-              key={child.id}
+              key={child.child_id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
@@ -180,13 +201,13 @@ const Profile: React.FC = () => {
                   <CardTitle>{child.name}</CardTitle>
                   <p className="text-sm">Age: {child.age}</p>
                   <p className="text-sm capitalize">Gender: {child.gender}</p>
-                  {child.behavioral_traits && <p className="text-sm">Traits: {child.behavioral_traits}</p>}
-                  {child.emotional_state && <p className="text-sm">Mood: {child.emotional_state}</p>}
+                  {child.behavioral_patterns?.mood && <p className="text-sm">Mood: {child.behavioral_patterns.mood}</p>}
+                  {child.emotional_state?.status && <p className="text-sm">Emotion: {child.emotional_state.status}</p>}
                   <div className="mt-3 flex gap-3">
                     <Button variant="outline" onClick={() => openEdit(child)} size="sm">
                       <Pencil size={16} /> Edit
                     </Button>
-                    <Button variant="destructive" onClick={() => handleDelete(child.id)} size="sm">
+                    <Button variant="destructive" onClick={() => handleDelete(child.child_id)} size="sm">
                       <Trash size={16} /> Delete
                     </Button>
                   </div>
@@ -209,16 +230,9 @@ const Profile: React.FC = () => {
               {formErrors.name && <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>}
             </div>
             <div>
-              <Label>Age</Label>
-              <Input
-                name="age"
-                type="number"
-                min="1"
-                max="18"
-                value={formData.age}
-                onChange={handleFormChange}
-              />
-              {formErrors.age && <p className="text-sm text-red-500 mt-1">{formErrors.age}</p>}
+              <Label>Birth Date</Label>
+              <Input name="birth_date" type="date" value={formData.birth_date} onChange={handleFormChange} />
+              {formErrors.birth_date && <p className="text-sm text-red-500 mt-1">{formErrors.birth_date}</p>}
             </div>
             <div>
               <Label>Gender</Label>
@@ -229,16 +243,25 @@ const Profile: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="male">Male</SelectItem>
                   <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Behavioral Traits</Label>
-              <Input name="behavioral_traits" value={formData.behavioral_traits} onChange={handleFormChange} />
+              <Label>Behavioral Mood</Label>
+              <Input
+                name="behavioral_mood"
+                value={formData.behavioral_patterns.mood}
+                onChange={handleBehaviorChange}
+              />
             </div>
             <div>
               <Label>Emotional State</Label>
-              <Input name="emotional_state" value={formData.emotional_state} onChange={handleFormChange} />
+              <Input
+                name="emotional_status"
+                value={formData.emotional_state.status}
+                onChange={handleEmotionChange}
+              />
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
