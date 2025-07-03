@@ -20,8 +20,12 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const [analyticsRes, recsRes] = await Promise.all([
-          axiosInstance.get("/auth/analytics/summary/"),
-          axiosInstance.get("/auth/recommendation/")
+          axiosInstance.get("/auth/analytics/feedback-analytics/"),
+          children?.[0]?.child_id
+            ? axiosInstance.get("/auth/recommendation/", {
+                params: { child_id: children[0].child_id }, // ✅ Send child_id
+              })
+            : Promise.resolve({ data: [] }),
         ]);
         setAnalytics(analyticsRes.data);
         setRecommendations(recsRes.data?.slice(0, 2) || []);

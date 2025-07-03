@@ -23,7 +23,7 @@ const Chat: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedChild = auth.children?.find((c) => c.child_id === selectedChildId) || null;
+  const selectedChild = childProfiles .find((c) => c.child_id === selectedChildId) || null;
 
   useEffect(() => {
     if (!auth.user && !auth.loading) {
@@ -100,14 +100,14 @@ const Chat: React.FC = () => {
 
       {/* Child Selector */}
       <div className="mb-4">
-        {auth.children?.length > 0 ? (
+        {childProfiles .length > 0 ? (
           <select
             className="p-2 border rounded-md w-full text-gray-800"
             value={selectedChildId ?? ""}
             onChange={(e) => setSelectedChildId(Number(e.target.value))}
           >
             <option value="">Choose a child to focus on</option>
-            {auth.children.map((child) => (
+            {childProfiles.map((child) => (
               <option key={child.child_id} value={child.child_id}>
                 {child.name} (Age: {child.age}, {child.gender})
               </option>
