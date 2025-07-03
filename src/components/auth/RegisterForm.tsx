@@ -4,7 +4,13 @@ import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 
 const RegisterForm: React.FC = () => {
-  const { register } = useAuth();
+  const auth = useAuth();
+  console.log("useAuth() returned:", auth);
+  if (!auth || typeof auth.register !== "function") {
+    throw new Error("Auth context is missing or malformed.");
+  }
+  const { register } = auth;
+
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
 
