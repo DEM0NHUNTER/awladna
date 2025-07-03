@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { Plus, Trash, Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import {
   Dialog,
   DialogContent,
