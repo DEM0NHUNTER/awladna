@@ -33,7 +33,7 @@ const Profile: React.FC = () => {
   const [editChild, setEditChild] = useState<ChildProfile | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    age: "",
+    age: Number(formData.age),
     gender: "male",
     behavioral_traits: "",
     emotional_state: "",
@@ -91,7 +91,7 @@ const Profile: React.FC = () => {
       setEditChild(null);
       setFormData({
         name: "",
-        age: "",
+        age: Number(formData.age),
         gender: "male",
         behavioral_traits: "",
         emotional_state: "",
@@ -134,7 +134,7 @@ const Profile: React.FC = () => {
     setEditChild(null);
     setFormData({
       name: "",
-      age: "",
+      age: Number(formData.age),
       gender: "male",
       behavioral_traits: "",
       emotional_state: "",
