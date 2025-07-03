@@ -1,59 +1,80 @@
-// src/components/ui/Dialog.tsx
-import React, { Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+"use client";
 
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  children: React.ReactNode;
-}
+import * as React from "react";
+import * as RadixDialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
-  return (
-    <Transition.Root show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" />
-        </Transition.Child>
+// Export Dialog as wrapper
+export const Dialog = RadixDialog.Root;
+export const DialogTrigger = RadixDialog.Trigger;
 
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <div className="flex justify-between items-center mb-4">
-                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-                    {title}
-                  </Dialog.Title>
-                  <button onClick={onClose} className="text-gray-400 hover:text-gray-700 focus:outline-none">
-                    <XMarkIcon className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="mt-2">
-                  {children}
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-  );
-};
+export const DialogPortal = ({ className, ...props }: RadixDialog.DialogPortalProps) => (
+  <RadixDialog.Portal {...props} />
+);
+DialogPortal.displayName = RadixDialog.Portal.displayName;
+
+export const DialogOverlay = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Overlay>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Overlay>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Overlay
+    ref={ref}
+    className={cn("fixed inset-0 z-50 bg-black/50 backdrop-blur-sm", className)}
+    {...props}
+  />
+));
+DialogOverlay.displayName = RadixDialog.Overlay.displayName;
+
+export const DialogContent = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Content>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Content>
+>(({ className, children, ...props }, ref) => (
+  <DialogPortal>
+    <DialogOverlay />
+    <RadixDialog.Content
+      ref={ref}
+      className={cn(
+        "fixed z-50 grid w-full max-w-lg scale-100 gap-4 border bg-white p-6 shadow-lg duration-200 sm:rounded-2xl sm:zoom-in-90",
+        "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <RadixDialog.Close className="absolute right-4 top-4 text-gray-500 hover:text-gray-900">
+        <X className="h-5 w-5" />
+      </RadixDialog.Close>
+    </RadixDialog.Content>
+  </DialogPortal>
+));
+DialogContent.displayName = RadixDialog.Content.displayName;
+
+export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)} {...props} />
+);
+DialogHeader.displayName = "DialogHeader";
+
+export const DialogTitle = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Title>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Title>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Title
+    ref={ref}
+    className={cn("text-lg font-semibold leading-none tracking-tight", className)}
+    {...props}
+  />
+));
+DialogTitle.displayName = RadixDialog.Title.displayName;
+
+export const DialogDescription = React.forwardRef<
+  React.ElementRef<typeof RadixDialog.Description>,
+  React.ComponentPropsWithoutRef<typeof RadixDialog.Description>
+>(({ className, ...props }, ref) => (
+  <RadixDialog.Description
+    ref={ref}
+    className={cn("text-sm text-gray-500", className)}
+    {...props}
+  />
+));
+DialogDescription.displayName = RadixDialog.Description.displayName;
