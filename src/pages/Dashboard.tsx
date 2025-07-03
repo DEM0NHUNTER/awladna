@@ -118,50 +118,54 @@ const Dashboard: React.FC = () => {
       </section>
 
       {/* 5. Role-Specific Content */}
-      {user?.role === "admin" ? (
-        <section className="bg-white rounded-2xl p-6 shadow mb-10">
-          <h2 className="text-lg font-bold mb-3">Admin Analytics Overview</h2>
-          <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto">
-            {JSON.stringify(analytics, null, 2)}
-          </pre>
-        </section>
-      ) : (
-        <section className="bg-white rounded-2xl p-6 shadow mb-10">
-          <h2 className="text-lg font-bold mb-3">Personalized Recommendations</h2>
-          {recommendations?.length > 0 ? (
-            recommendations.map((rec, idx) => (
-              <div key={idx} className="border-l-4 border-indigo-400 pl-4 mb-4">
-                <h3 className="font-semibold text-indigo-700">{rec.title}</h3>
-                <p className="text-sm text-gray-600">{rec.description}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-gray-500">No recommendations available.</p>
-          )}
-        </section>
-        {/* 6. Feedback Analytics Card */}
-        <section className="bg-white rounded-2xl p-6 shadow mb-10">
-          <h2 className="text-lg font-bold mb-3">Feedback Summary</h2>
-          {analytics ? (
-            <div className="grid sm:grid-cols-3 gap-4 text-sm text-gray-700">
-              <div className="bg-indigo-50 p-4 rounded-xl text-center">
-                <p className="text-3xl font-bold text-indigo-600">{analytics.total_feedback}</p>
-                <p>Total Feedback</p>
-              </div>
-              <div className="bg-indigo-50 p-4 rounded-xl text-center">
-                <p className="text-3xl font-bold text-indigo-600">{analytics.average_rating}⭐</p>
-                <p>Average Rating</p>
-              </div>
-              <div className="bg-indigo-50 p-4 rounded-xl text-center">
-                <p className="text-3xl font-bold text-indigo-600">{analytics.improvement_rate}</p>
-                <p>Improvement Rate</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500 text-sm">No analytics data available yet.</p>
-          )}
-        </section>
-      )}
+        {user?.role === "admin" ? (
+          <section className="bg-white rounded-2xl p-6 shadow mb-10">
+            <h2 className="text-lg font-bold mb-3">Admin Analytics Overview</h2>
+            <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto">
+              {JSON.stringify(analytics, null, 2)}
+            </pre>
+          </section>
+        ) : (
+          <>
+            {/* User - Recommendations */}
+            <section className="bg-white rounded-2xl p-6 shadow mb-10">
+              <h2 className="text-lg font-bold mb-3">Personalized Recommendations</h2>
+              {recommendations?.length > 0 ? (
+                recommendations.map((rec, idx) => (
+                  <div key={idx} className="border-l-4 border-indigo-400 pl-4 mb-4">
+                    <h3 className="font-semibold text-indigo-700">{rec.title}</h3>
+                    <p className="text-sm text-gray-600">{rec.description}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-gray-500">No recommendations available.</p>
+              )}
+            </section>
+
+            {/* User - Feedback Analytics */}
+            <section className="bg-white rounded-2xl p-6 shadow mb-10">
+              <h2 className="text-lg font-bold mb-3">Feedback Summary</h2>
+              {analytics ? (
+                <div className="grid sm:grid-cols-3 gap-4 text-sm text-gray-700">
+                  <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                    <p className="text-3xl font-bold text-indigo-600">{analytics.total_feedback}</p>
+                    <p>Total Feedback</p>
+                  </div>
+                  <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                    <p className="text-3xl font-bold text-indigo-600">{analytics.average_rating}⭐</p>
+                    <p>Average Rating</p>
+                  </div>
+                  <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                    <p className="text-3xl font-bold text-indigo-600">{analytics.improvement_rate}</p>
+                    <p>Improvement Rate</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No analytics data available yet.</p>
+              )}
+            </section>
+          </>
+        )}
     </div>
   );
 };
