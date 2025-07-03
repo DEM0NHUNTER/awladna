@@ -76,7 +76,7 @@ const Profile: React.FC = () => {
   const handleChildDelete = (id: number) => setChildren(children.filter(c => c.id !== id));
 
   // Determine childId for Sidebar: use first child if available, else '1'
-  const sidebarChildId = children.length > 0 ? children[0].id.toString() : '1';
+  const sidebarChildId = children?.length > 0 ? children?[0].id.toString() : '1';
 
   // Sidebar open/collapse state
   const [sidebarOpen, setSidebarOpen] = useState(false); // for mobile
@@ -216,7 +216,7 @@ const Profile: React.FC = () => {
                 {t('addChildButton')}
               </button>
             </div>
-            {children.length === 0 ? (
+            {children?.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

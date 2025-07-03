@@ -23,7 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch user from backend using token
   const refreshUser = async () => {
     try {
-      const res = await axiosInstance.get("/auth/me/"); // ensure backend has this endpoint
+      const res = await axiosInstance.get("/me"); // ensure backend has this endpoint
       setUser(res.data);
     } catch {
       setUser(null);

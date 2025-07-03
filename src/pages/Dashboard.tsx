@@ -10,8 +10,8 @@ import { format } from "date-fns";
 const Dashboard: React.FC = () => {
   const { user, children } = useAuth();
   const { chats } = useChatContext();
-  const [analytics, setAnalytics] = useState(null);
-  const [recommendations, setRecommendations] = useState([]);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const navigate = useNavigate();
 
   const today = format(new Date(), "EEEE, MMMM d");
@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
           axiosInstance.get("/auth/recommendation")
         ]);
         setAnalytics(analyticsRes.data);
-        setRecommendations(recsRes.data.slice(0, 2)); // snippet only
+        setRecommendations(recsRes.data?.slice(0, 2) || []);
       } catch (err) {
         console.error("Dashboard data load failed", err);
       }
@@ -113,23 +113,27 @@ const Dashboard: React.FC = () => {
         </div>
       </section>
 
-      {/* Admin or Parent-Specific Insights */}
+      {/* 5. Role-Specific Content */}
       {user?.role === "admin" ? (
         <section className="bg-white rounded-2xl p-6 shadow mb-10">
           <h2 className="text-lg font-bold mb-3">Admin Analytics Overview</h2>
-          <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded">
+          <pre className="text-xs text-gray-600 bg-gray-50 p-3 rounded overflow-x-auto">
             {JSON.stringify(analytics, null, 2)}
           </pre>
         </section>
       ) : (
         <section className="bg-white rounded-2xl p-6 shadow mb-10">
           <h2 className="text-lg font-bold mb-3">Personalized Recommendations</h2>
-          {recommendations.map((rec: any, idx) => (
-            <div key={idx} className="border-l-4 border-indigo-400 pl-4 mb-4">
-              <h3 className="font-semibold text-indigo-700">{rec.title}</h3>
-              <p className="text-sm text-gray-600">{rec.description}</p>
-            </div>
-          ))}
+          {recommendations?.length > 0 ? (
+            recommendations.map((rec, idx) => (
+              <div key={idx} className="border-l-4 border-indigo-400 pl-4 mb-4">
+                <h3 className="font-semibold text-indigo-700">{rec.title}</h3>
+                <p className="text-sm text-gray-600">{rec.description}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No recommendations available.</p>
+          )}
         </section>
       )}
     </div>

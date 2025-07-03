@@ -164,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ childId, collapsed = false, onClose, 
                     &times;
                   </button>
                   <h2 className="text-xl font-bold mb-4 text-indigo-700">{t('chatHistory', 'Chat History')}</h2>
-                  {chats.length === 0 ? (
+                  {chats?.length === 0 ? (
                     <div className="text-gray-500 text-center py-8">{t('noChatsYet', 'No chats yet. Start a new chat!')}</div>
                   ) : (
                     <ul className="space-y-3 max-h-80 overflow-y-auto pr-2">

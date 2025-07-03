@@ -50,7 +50,7 @@ const App: React.FC = () => {
                   <Navbar />
           <main className="flex-grow bg-gray-50 p-4">
             <Routes>
-                      <Route path="/" element={<Home />} />
+                      <Route path="/" element={<Login />} />
                       <Route path="/home" element={<Home />} />
                       <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
