@@ -1,29 +1,30 @@
-// src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { User } from "../types/user";
 
+// Context interface
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  children: any[]; // ✅ Added children profiles
+  children: any[];
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  refreshChildren: () => Promise<void>; // ✅ Added children refresher
+  refreshChildren: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+// ✅ Safe context creation (initially undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children: appChildren }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState<any[]>([]); // ✅ Children state
+  const [childrenProfiles, setChildrenProfiles] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  // ✅ Fetch user info from token
+  // ✅ Get current user
   const refreshUser = async () => {
     try {
       const res = await axiosInstance.get("/me");
@@ -35,24 +36,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Fetch child profiles
+  // ✅ Get child profiles
   const refreshChildren = async () => {
     try {
       const res = await axiosInstance.get("/auth/child/");
-      setChildren(res.data);
+      setChildrenProfiles(res.data);
     } catch (err) {
       console.error("Failed to fetch children:", err);
-      setChildren([]);
+      setChildrenProfiles([]);
     }
   };
 
-  // ✅ Login and fetch user + children
+  // ✅ Login flow
   const login = async (email: string, password: string) => {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
       const token = res.data.access_token;
 
-      // Store token and attach to headers
       localStorage.setItem("access_token", token);
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
@@ -64,7 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Register user
+  // ✅ Register flow
   const register = async (email: string, password: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password });
@@ -84,43 +84,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem("access_token");
       delete axiosInstance.defaults.headers.common["Authorization"];
       setUser(null);
-      setChildren([]);
+      setChildrenProfiles([]);
       navigate("/login");
     }
   };
 
-  // ✅ On load, check token
-    useEffect(() => {
-      const token = localStorage.getItem("access_token");
+  // ✅ Init on mount
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
 
-      const initialize = async () => {
-        if (token) {
-          axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-          await Promise.all([refreshUser(), refreshChildren()]);
-        } else {
-          setLoading(false);
-        }
-      };
+    const initialize = async () => {
+      if (token) {
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        await Promise.all([refreshUser(), refreshChildren()]);
+      } else {
+        setLoading(false);
+      }
+    };
 
-      initialize();
-    }, []);
+    initialize();
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
-        children, // ✅ Provided to consumer
+        children: childrenProfiles,
         login,
         register,
         logout,
         refreshUser,
-        refreshChildren, // ✅ Provided to consumer
+        refreshChildren,
       }}
     >
-      {appChildren}
+      {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+// ✅ Custom hook with safety guard
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};
