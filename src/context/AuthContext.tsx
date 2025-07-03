@@ -91,15 +91,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // ✅ On load, check token
-  useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      Promise.all([refreshUser(), refreshChildren()]);
-    } else {
-      setLoading(false);
-    }
-  }, []);
+    useEffect(() => {
+      const token = localStorage.getItem("access_token");
+
+      const initialize = async () => {
+        if (token) {
+          axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          await Promise.all([refreshUser(), refreshChildren()]);
+        } else {
+          setLoading(false);
+        }
+      };
+
+      initialize();
+    }, []);
 
   return (
     <AuthContext.Provider
