@@ -1,117 +1,190 @@
 // src/pages/Chat.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-import { MessageSquare, SendHorizonal } from "lucide-react";
-import  Input  from "@/components/ui/Input";
+import { useChatContext } from "../context/ChatContext";
+import axiosInstance from "../api/axiosInstance";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Skeleton } from "@/components/ui/Skeleton";
+import  Input  from "@/components/ui/Input";
 
 interface Message {
-  role: "parent" | "assistant";
+  role: "user" | "assistant";
   content: string;
-  timestamp?: string;
+  timestamp: string;
+}
+
+interface Child {
+  child_id: number;
+  name: string;
+  age: number;
+  gender: string;
+  birth_date: string;
 }
 
 const Chat: React.FC = () => {
-  const { user } = useAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
+  const { children } = useAuth();
+  const { chats, setChats } = useChatContext();
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedChild = children?.find((c) => c.child_id === selectedChildId) || null;
 
   useEffect(() => {
-    const ws = new WebSocket("wss://your-api-domain/ws/chat"); // 🔁 Replace with actual endpoint
-    ws.onopen = () => console.log("WebSocket connected");
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.response }]);
-      setLoading(false);
-    };
-    ws.onerror = (err) => console.error("WebSocket error", err);
-    ws.onclose = () => console.warn("WebSocket closed");
+    if (selectedChildId) {
+      fetchChatHistory(selectedChildId);
+    } else {
+      setChats([]);
+    }
+  }, [selectedChildId]);
 
-    setSocket(ws);
-    return () => ws.close();
-  }, []);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
-
-  const sendMessage = () => {
-    if (!input.trim() || !socket) return;
-
-    const newMessage: Message = {
-      role: "parent",
-      content: input,
-      timestamp: new Date().toISOString()
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
-    socket.send(JSON.stringify({ message: input }));
-    setInput("");
-    setLoading(true);
+  const fetchChatHistory = async (childId: number) => {
+    try {
+      const res = await axiosInstance.get(`/chat/history/${childId}`);
+      const pastMessages: Message[] = res.data.map((msg: any) => ({
+        role: "assistant",
+        content: msg.response,
+        timestamp: msg.timestamp,
+      }));
+      setChats(pastMessages);
+    } catch (err) {
+      console.error("Failed to fetch chat history", err);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") sendMessage();
+  useEffect(() => {
+    scrollToBottom();
+  }, [chats]);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleSend = async () => {
+    if (!message.trim()) return;
+
+    const userMessage: Message = {
+      role: "user",
+      content: message,
+      timestamp: new Date().toISOString(),
+    };
+
+    setChats((prev) => [...prev, userMessage]);
+    setMessage("");
+    setLoading(true);
+
+    try {
+      const res = await axiosInstance.post("/chat/", {
+        message,
+        child_id: selectedChildId,
+        context: `This conversation is about ${selectedChild?.name || "your child"}.`,
+      });
+
+      const aiMessage: Message = {
+        role: "assistant",
+        content: res.data?.response || "No reply received.",
+        timestamp: res.data?.timestamp || new Date().toISOString(),
+      };
+
+      setChats((prev) => [...prev, aiMessage]);
+    } catch (err) {
+      console.error("Failed to send chat message", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-white text-gray-800">
-      <div className="p-4 border-b font-semibold text-lg flex items-center gap-2">
-        <MessageSquare className="text-indigo-600" /> Parenting Chat
+    <div className="min-h-screen p-6 bg-white flex flex-col">
+      <h1 className="text-2xl font-bold mb-4">Chat with Awladna AI</h1>
+
+      {/* Child Selector */}
+      <div className="mb-4">
+        {children && children.length > 0 ? (
+          <select
+            className="p-2 border rounded-md text-gray-800"
+            value={selectedChildId ?? ""}
+            onChange={(e) => setSelectedChildId(Number(e.target.value))}
+          >
+            <option value="">Choose a child to focus on</option>
+            {children.map((child) => (
+              <option key={child.child_id} value={child.child_id}>
+                {child.name} ({child.age}, {child.gender})
+              </option>
+            ))}
+          </select>
+        ) : (
+          <p className="text-sm text-gray-500">
+            No child profiles found.{" "}
+            <a href="/profile" className="text-indigo-600 underline">
+              Create one
+            </a>
+            .
+          </p>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
-        {messages.map((msg, idx) => (
+      {/* Selected Child Info */}
+      {selectedChild && (
+        <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded mb-4">
+          <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-white font-bold uppercase">
+            {selectedChild.name.charAt(0)}
+          </div>
+          <div>
+            <p className="font-medium">{selectedChild.name}</p>
+            <p className="text-sm text-gray-600">
+              Age {selectedChild.age}, {selectedChild.gender}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Chat Box */}
+      <div className="flex-1 overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50">
+        {chats.map((msg, index) => (
           <div
-            key={idx}
-            className={`flex ${msg.role === "parent" ? "justify-end" : "justify-start"}`}
-          >
-            <div className={`max-w-xs md:max-w-md rounded-xl p-3 text-sm whitespace-pre-wrap ${
-              msg.role === "parent"
-                ? "bg-indigo-100 text-right"
-                : "bg-gray-100 text-left"
+            key={index}
+            className={`max-w-xl ${
+              msg.role === "user" ? "ml-auto text-right" : "text-left"
             }`}
+          >
+            <div
+              className={`inline-block px-4 py-2 rounded-lg ${
+                msg.role === "user"
+                  ? "bg-indigo-500 text-white"
+                  : "bg-white border"
+              }`}
             >
-              <p className="font-semibold mb-1">
-                {msg.role === "parent" ? user?.name || "You" : "Awladna AI"}
-              </p>
-              <p>{msg.content}</p>
-              {msg.timestamp && (
-                <p className="text-[10px] text-gray-400 mt-1 text-right">
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              )}
+              {msg.content}
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              {new Date(msg.timestamp).toLocaleTimeString()}
             </div>
           </div>
         ))}
-
-        {loading && (
-          <div className="flex justify-start">
-            <div className="max-w-xs md:max-w-md rounded-xl p-3 bg-gray-100">
-              <Skeleton className="h-4 w-40 mb-2" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+        <div ref={chatEndRef} />
       </div>
 
-      <div className="p-4 border-t flex gap-2">
+      {/* Input */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="mt-4 flex gap-2"
+      >
         <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask something about your child..."
+          type="text"
+          placeholder="Type your message..."
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          disabled={loading}
         />
-        <Button onClick={sendMessage} disabled={!input.trim() || loading}>
-          <SendHorizonal size={18} />
+        <Button type="submit" disabled={loading || !message.trim()}>
+          <Send size={18} />
         </Button>
-      </div>
+      </form>
     </div>
   );
 };
