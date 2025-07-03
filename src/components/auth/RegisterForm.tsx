@@ -4,15 +4,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 
 const RegisterForm: React.FC = () => {
-  const auth = useAuth();
-  console.log("useAuth() returned:", auth);
-  if (!auth || typeof auth.register !== "function") {
-    throw new Error("Auth context is missing or malformed.");
-  }
-  const { register } = auth;
-
+  const { register } = useAuth();
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,12 +19,12 @@ const RegisterForm: React.FC = () => {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("errors.passwordsDoNotMatch", "Passwords do not match"));
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
+      setError(t("errors.passwordTooShort", "Password must be at least 6 characters long"));
       return;
     }
 
@@ -39,7 +33,7 @@ const RegisterForm: React.FC = () => {
       await register(email, password);
       navigate("/login");
     } catch {
-      setError("Registration failed. Please try again.");
+      setError(t("errors.registrationFailed", "Registration failed. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -53,10 +47,12 @@ const RegisterForm: React.FC = () => {
       </div>
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">{t('createAccount', 'Create Account')}</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            {t('createAccount', 'Create Account')}
+          </h1>
           <p className="text-gray-600">{t('joinUs', 'Join us and start your parenting journey')}</p>
         </div>
-        
+
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
@@ -68,22 +64,18 @@ const RegisterForm: React.FC = () => {
                     </svg>
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm text-red-800">{t(error)}</p>
+                    <p className="text-sm text-red-800">{error}</p>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('emailAddress')}
+                {t('emailAddress', 'Email Address')}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                  </svg>
-                </div>
                 <input
                   id="email"
                   type="email"
@@ -97,16 +89,12 @@ const RegisterForm: React.FC = () => {
               </div>
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('password')}
+                {t('password', 'Password')}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
                 <input
                   id="password"
                   type="password"
@@ -118,19 +106,17 @@ const RegisterForm: React.FC = () => {
                   autoComplete="new-password"
                 />
               </div>
-              <p className="mt-1 text-xs text-gray-500">{t('passwordMinLength', 'Must be at least 6 characters')}</p>
+              <p className="mt-1 text-xs text-gray-500">
+                {t('passwordMinLength', 'Must be at least 6 characters')}
+              </p>
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('confirmPassword')}
+                {t('confirmPassword', 'Confirm Password')}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
                 <input
                   id="confirmPassword"
                   type="password"
@@ -144,6 +130,7 @@ const RegisterForm: React.FC = () => {
               </div>
             </div>
 
+            {/* Terms */}
             <div className="flex items-center">
               <input
                 id="terms"
@@ -153,17 +140,18 @@ const RegisterForm: React.FC = () => {
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
               <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                {t('agreeTo')}
+                {t('agreeTo', 'I agree to the')}{' '}
                 <Link to="/terms" className="text-blue-600 hover:text-blue-500 font-medium">
                   {t('termsOfService', 'Terms of Service')}
-                </Link>{" "}
-                {t('and', 'and')}
+                </Link>{' '}
+                {t('and', 'and')}{' '}
                 <Link to="/privacy" className="text-blue-600 hover:text-blue-500 font-medium">
                   {t('privacyPolicy', 'Privacy Policy')}
                 </Link>
               </label>
             </div>
 
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -216,6 +204,7 @@ const LanguageSwitcher = () => {
     { code: 'ar', label: 'العربية' }
   ];
   const current = languages.find(l => l.code === i18n.language) || languages[0];
+
   return (
     <div className="relative">
       <button
