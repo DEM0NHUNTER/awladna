@@ -235,3 +235,4 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
+// This code defines a Profile page where users can manage child profiles.
