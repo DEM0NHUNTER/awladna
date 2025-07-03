@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const [analyticsRes, recsRes] = await Promise.all([
-          axiosInstance.get("/analytics/summary"),
+          axiosInstance.get("/auth/analytics/summary"),
           axiosInstance.get("/auth/recommendation")
         ]);
         setAnalytics(analyticsRes.data);

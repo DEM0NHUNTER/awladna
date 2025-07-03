@@ -1,376 +1,235 @@
-import React, { useRef, useState } from "react";
+// src/pages/Profile.tsx
+import React, { useEffect, useState } from "react";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../context/AuthContext";
-import Sidebar from '../components/layout/Sidebar';
-import { useTranslation } from 'react-i18next';
+import { Plus, Trash, Pencil } from "lucide-react";
+import { toast } from "react-toastify";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-interface Child {
+interface ChildProfile {
   id: number;
   name: string;
   age: number;
-  gender: "Male" | "Female";
-  school?: string;
-  challenges?: string;
+  gender: string;
+  behavioral_traits?: string;
+  emotional_state?: string;
 }
 
-const defaultAvatar = "https://ui-avatars.com/api/?name=User&background=000080&color=fff&size=128";
-
 const Profile: React.FC = () => {
-  const { user, updateUser, children, setChildren } = useAuth();
-  const [avatar, setAvatar] = useState<string>(user?.picture || defaultAvatar);
-  const [editingName, setEditingName] = useState(false);
-  const [name, setName] = useState(user?.name || "");
-  const [showChildForm, setShowChildForm] = useState(false);
-  const [childForm, setChildForm] = useState<Partial<Child>>({});
-  const [editChildId, setEditChildId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+  const { user, refreshChildren } = useAuth();
+  const [children, setChildren] = useState<ChildProfile[]>([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editChild, setEditChild] = useState<ChildProfile | null>(null);
+  const [formData, setFormData] = useState({
+    name: "",
+    age: "",
+    gender: "male",
+    behavioral_traits: "",
+    emotional_state: "",
+  });
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
 
-  // Avatar upload
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setAvatar(ev.target?.result as string);
-        updateUser({ picture: ev.target?.result as string });
-      };
-      reader.readAsDataURL(e.target.files[0]);
+  const loadChildren = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/child/");
+      setChildren(res.data);
+    } catch (err) {
+      console.error("Failed to fetch children:", err);
     }
   };
-  const handleAvatarRemove = () => {
-    setAvatar(defaultAvatar);
-    updateUser({ picture: defaultAvatar });
+
+  useEffect(() => {
+    loadChildren();
+  }, []);
+
+  const validateForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!formData.name.trim()) errors.name = "Name is required.";
+    if (!formData.age || isNaN(Number(formData.age))) errors.age = "Valid age is required.";
+    return errors;
   };
 
-  // Name edit
-  const handleNameSave = () => {
-    updateUser({ name });
-    setEditingName(false);
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  // Child form handlers
-  const openAddChild = () => {
-    setChildForm({});
-    setEditChildId(null);
-    setShowChildForm(true);
+  const handleGenderChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, gender: value }));
   };
-  const openEditChild = (child: Child) => {
-    setChildForm(child);
-    setEditChildId(child.id);
-    setShowChildForm(true);
-  };
-  const handleChildFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setChildForm({ ...childForm, [e.target.name]: e.target.value });
-  };
-  const handleChildFormSave = () => {
-    if (!childForm.name || !childForm.age || !childForm.gender) return;
-    if (editChildId !== null) {
-      setChildren(children.map(c => c.id === editChildId ? { ...c, ...childForm } as Child : c));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    try {
+      if (editChild) {
+        await axiosInstance.put(`/auth/child/${editChild.id}`, formData);
+        toast.success("Profile updated!");
       } else {
-      setChildren([...children, { ...childForm, id: Date.now() } as Child]);
+        await axiosInstance.post("/auth/child/", formData);
+        toast.success("Profile added!");
+      }
+
+      setModalOpen(false);
+      setEditChild(null);
+      setFormData({
+        name: "",
+        age: "",
+        gender: "male",
+        behavioral_traits: "",
+        emotional_state: "",
+      });
+      await loadChildren();
+      await refreshChildren();
+    } catch (err) {
+      toast.error("Something went wrong while saving.");
+      console.error("Error saving child:", err);
     }
-    setShowChildForm(false);
-    setChildForm({});
-    setEditChildId(null);
   };
-  const handleChildDelete = (id: number) => setChildren(children.filter(c => c.id !== id));
 
-  // Determine childId for Sidebar: use first child if available, else '1'
-  const sidebarChildId = children?.length > 0 ? children?.[0].id.toString() : '1';
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this profile?")) return;
+    try {
+      await axiosInstance.delete(`/auth/child/${id}`);
+      toast.success("Profile deleted.");
+      await loadChildren();
+      await refreshChildren();
+    } catch (err) {
+      toast.error("Delete failed.");
+      console.error("Delete failed:", err);
+    }
+  };
 
-  // Sidebar open/collapse state
-  const [sidebarOpen, setSidebarOpen] = useState(false); // for mobile
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // for desktop
+  const openEdit = (child: ChildProfile) => {
+    setEditChild(child);
+    setFormData({
+      name: child.name,
+      age: child.age.toString(),
+      gender: child.gender,
+      behavioral_traits: child.behavioral_traits || "",
+      emotional_state: child.emotional_state || "",
+    });
+    setFormErrors({});
+    setModalOpen(true);
+  };
+
+  const openCreate = () => {
+    setEditChild(null);
+    setFormData({
+      name: "",
+      age: "",
+      gender: "male",
+      behavioral_traits: "",
+      emotional_state: "",
+    });
+    setFormErrors({});
+    setModalOpen(true);
+  };
 
   return (
-    <div className={`min-h-screen bg-white flex flex-row ${isRTL ? 'flex-row-reverse' : ''}`}>
-      {/* Sidebar: fixed on desktop, overlays on mobile */}
-      {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col h-full z-30 bg-gradient-to-b from-[#000080] to-[#000080]/90 shadow-xl fixed top-0 ${isRTL ? 'right-0' : 'left-0'} transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-80'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <Sidebar childId={sidebarChildId} collapsed={sidebarCollapsed} />
-        {/* Collapse/Expand Button */}
-        <button
-          className={`absolute bottom-4 ${isRTL ? 'left-4' : 'right-4'} bg-white/20 text-white rounded-full p-2 hover:bg-white/30 transition md:block hidden`}
-          onClick={() => setSidebarCollapsed(c => !c)}
-          aria-label={sidebarCollapsed ? t('expandSidebar', 'Expand sidebar') : t('collapseSidebar', 'Collapse sidebar')}
-        >
-          {sidebarCollapsed ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          )}
-        </button>
-      </aside>
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          <aside className={`relative w-64 bg-gradient-to-b from-[#000080] to-[#000080]/90 shadow-xl h-full z-50 ${isRTL ? 'right-0' : 'left-0'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-            <Sidebar childId={sidebarChildId} onClose={() => setSidebarOpen(false)} />
-          </aside>
-        </div>
-      )}
-      {/* Main Profile Area: offset for sidebar */}
-      <main className={`flex-1 min-h-screen pt-8 pb-safe transition-all duration-300 ${sidebarCollapsed ? (isRTL ? 'md:mr-20' : 'md:ml-20') : (isRTL ? 'md:mr-80' : 'md:ml-80')}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        {/* Hamburger Button for mobile */}
-        <button
-          className={`md:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-50 bg-[#000080] text-white rounded-full p-2 shadow-lg`}
-          onClick={() => setSidebarOpen(true)}
-          aria-label={t('openSidebar', 'Open sidebar')}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
-        <div className="max-w-3xl mx-auto py-8 px-2 md:px-0">
-          {/* User Info Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8 flex flex-col md:flex-row items-center md:items-start gap-8">
-            <div className="relative">
-              <img
-                src={avatar}
-                alt="User Avatar"
-                className="w-32 h-32 rounded-full object-cover border-4 border-[#000080]"
-              />
-              <button
-                className="absolute bottom-2 right-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg"
-                onClick={() => fileInputRef.current?.click()}
-                title={t('uploadPhoto')}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  ref={fileInputRef}
-                  onChange={handleAvatarChange}
-                />
-              </button>
-              {avatar !== defaultAvatar && (
-                <button
-                  className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 shadow-lg"
-                  onClick={handleAvatarRemove}
-                  title={t('removePhoto')}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
-            <div className="flex-1 w-full">
-              <h1 className="text-3xl font-bold mb-4">{t('myProfile')}</h1>
-              <div className="mb-4">
-                <label className="block text-gray-700 font-semibold mb-1">{t('fullName')}</label>
-                {editingName ? (
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="border rounded px-3 py-2 w-full"
-                      value={name}
-                      onChange={e => setName(e.target.value)}
-                    />
-                    <button
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded"
-                      onClick={handleNameSave}
-                    >
-                      {t('save')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input
-                      className="border rounded px-3 py-2 w-full bg-gray-100 cursor-default"
-                      value={name}
-                      readOnly
-                    />
-                    <button
-                      className="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded"
-                      onClick={() => setEditingName(true)}
-                      title={t('edit')}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="mb-2">
-                <label className="block text-gray-700 font-semibold mb-1">{t('emailAddress')}</label>
-                <input
-                  className="border rounded px-3 py-2 w-full bg-gray-100 cursor-default"
-                  value={user?.email || ""}
-                  readOnly
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* My Children Section */}
-          <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">{t('myChildren')}</h2>
-              <button
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-5 py-2 rounded-xl font-semibold shadow hover:from-blue-600 hover:to-purple-600 transition"
-                onClick={openAddChild}
-              >
-                {t('addChildButton')}
-              </button>
-            </div>
-            {children?.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                </div>
-                <p className="text-lg font-semibold text-gray-500 mb-2">{t('noChildren')}</p>
-                <p className="text-gray-400 mb-4">{t('addChildrenInfo')}</p>
-                <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold"
-                  onClick={openAddChild}
-                >
-                  {t('addFirstChild')}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {children.map(child => (
-                  <div key={child.id} className="bg-gray-50 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <div className="font-bold text-lg mb-1">{child.name}</div>
-                      <div className="text-gray-700 text-sm mb-1">{t('age')}: {child.age} {t('yearsOld')}</div>
-                      <div className="text-gray-700 text-sm mb-1">{t('gender')}: {t(child.gender.toLowerCase())}</div>
-                      {child.school && <div className="text-gray-700 text-sm mb-1">{t('school')}: {child.school}</div>}
-                      {child.challenges && <div className="text-gray-700 text-sm">{t('currentChallenges')}: {child.challenges}</div>}
-                    </div>
-                    <div className="flex gap-2 mt-4 md:mt-0">
-                      <button
-                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg"
-                        onClick={() => openEditChild(child)}
-                        title={t('edit')}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536M9 13l3 3 8-8M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                      <button
-                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg"
-                        onClick={() => handleChildDelete(child.id)}
-                        title={t('delete')}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Add/Edit Child Modal */}
-          {showChildForm && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/10 animate-fadeIn">
-              <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative" dir={isRTL ? 'rtl' : 'ltr'}>
-                {/* Close Button */}
-                <button
-                  className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none`}
-                  onClick={() => setShowChildForm(false)}
-                  aria-label={t('close', 'Close')}
-                >
-                  &times;
-                </button>
-                <h3 className="text-2xl font-bold mb-6">{editChildId !== null ? t('editChild') : t('addChild')}</h3>
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-1">{t('childName')}</label>
-                  <div className="relative">
-        <input
-                      className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-          name="name"
-                      placeholder={t('enterChildName')}
-                      value={childForm.name || ""}
-                      onChange={handleChildFormChange}
-                    />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-1">{t('age')} *</label>
-                  <div className="relative">
-        <input
-                      className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-                      name="age"
-                      type="number"
-                      min="0"
-                      placeholder={t('age')}
-                      value={childForm.age || ""}
-                      onChange={handleChildFormChange}
-                    />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" /></svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-1">{t('gender')} *</label>
-                  <select
-                    className="border rounded-xl px-4 py-3 w-full focus:ring-2 focus:ring-blue-200"
-          name="gender"
-                    value={childForm.gender || ""}
-                    onChange={handleChildFormChange}
-                  >
-                    <option value="">{t('selectGender')}</option>
-                    <option value="Male">{t('male')}</option>
-                    <option value="Female">{t('female')}</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-1">{t('school')}</label>
-                  <div className="relative">
-                    <input
-                      className="border rounded-xl px-4 py-3 w-full pl-12 focus:ring-2 focus:ring-blue-200"
-                      name="school"
-                      placeholder={t('enterSchoolName')}
-                      value={childForm.school || ""}
-                      onChange={handleChildFormChange}
-                    />
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg>
-                    </span>
-                  </div>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 font-semibold mb-1">{t('currentProblems')}</label>
-                  <textarea
-                    className="border rounded-xl px-4 py-3 w-full focus:ring-2 focus:ring-blue-200"
-                    name="challenges"
-                    placeholder={t('describeChallenges')}
-                    value={childForm.challenges || ""}
-                    onChange={handleChildFormChange}
-                  />
-                </div>
-                <div className="flex gap-2 justify-end mt-6">
-          <button
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-xl"
-                    onClick={() => setShowChildForm(false)}
-          >
-                    {t('cancel')}
-          </button>
-          <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold"
-                    onClick={handleChildFormSave}
-          >
-                    {t('save')}
-          </button>
-                </div>
-              </div>
-            </div>
-        )}
+    <div className="min-h-screen p-6 bg-gray-50 text-gray-800">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Child Profiles</h1>
+        <Button onClick={openCreate} className="gap-2">
+          <Plus size={18} /> Add New
+        </Button>
       </div>
-      </main>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <AnimatePresence>
+          {children.length === 0 && <p className="text-sm text-gray-500">No profiles yet.</p>}
+          {children.map((child) => (
+            <motion.div
+              key={child.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Card>
+                <CardContent className="p-4">
+                  <CardTitle>{child.name}</CardTitle>
+                  <p className="text-sm">Age: {child.age}</p>
+                  <p className="text-sm capitalize">Gender: {child.gender}</p>
+                  {child.behavioral_traits && <p className="text-sm">Traits: {child.behavioral_traits}</p>}
+                  {child.emotional_state && <p className="text-sm">Mood: {child.emotional_state}</p>}
+                  <div className="mt-3 flex gap-3">
+                    <Button variant="outline" onClick={() => openEdit(child)} size="sm">
+                      <Pencil size={16} /> Edit
+                    </Button>
+                    <Button variant="destructive" onClick={() => handleDelete(child.id)} size="sm">
+                      <Trash size={16} /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editChild ? "Edit Child Profile" : "Add New Profile"}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label>Name</Label>
+              <Input name="name" value={formData.name} onChange={handleFormChange} />
+              {formErrors.name && <p className="text-sm text-red-500 mt-1">{formErrors.name}</p>}
+            </div>
+            <div>
+              <Label>Age</Label>
+              <Input name="age" type="number" value={formData.age} onChange={handleFormChange} />
+              {formErrors.age && <p className="text-sm text-red-500 mt-1">{formErrors.age}</p>}
+            </div>
+            <div>
+              <Label>Gender</Label>
+              <Select value={formData.gender} onValueChange={handleGenderChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Behavioral Traits</Label>
+              <Input name="behavioral_traits" value={formData.behavioral_traits} onChange={handleFormChange} />
+            </div>
+            <div>
+              <Label>Emotional State</Label>
+              <Input name="emotional_state" value={formData.emotional_state} onChange={handleFormChange} />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
