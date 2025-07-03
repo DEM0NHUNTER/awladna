@@ -111,10 +111,10 @@ const Profile: React.FC = () => {
       };
 
       if (editChild) {
-        await axiosInstance.put(`/auth/child${editChild.child_id}`, payload);
+        await axiosInstance.put(`/auth/child${editChild.child_id}/`, payload);
         toast.success("Profile updated!");
       } else {
-        await axiosInstance.post("/auth/child", payload);
+        await axiosInstance.post("/auth/child/", payload);
         toast.success("Profile added!");
       }
 
