@@ -7,23 +7,26 @@ import { User } from "../types/user";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  children: any[]; // ✅ Added children profiles
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshChildren: () => Promise<void>; // ✅ Added children refresher
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children: appChildren }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [children, setChildren] = useState<any[]>([]); // ✅ Children state
   const navigate = useNavigate();
 
-  // Fetch user from backend using token
+  // ✅ Fetch user info from token
   const refreshUser = async () => {
     try {
-      const res = await axiosInstance.get("/me"); // ensure backend has this endpoint
+      const res = await axiosInstance.get("/me");
       setUser(res.data);
     } catch {
       setUser(null);
@@ -32,16 +35,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ✅ Fetch child profiles
+  const refreshChildren = async () => {
+    try {
+      const res = await axiosInstance.get("/auth/child/");
+      setChildren(res.data);
+    } catch (err) {
+      console.error("Failed to fetch children:", err);
+      setChildren([]);
+    }
+  };
+
+  // ✅ Login and fetch user + children
   const login = async (email: string, password: string) => {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
       const token = res.data.access_token;
 
-      // Store token and set header
+      // Store token and attach to headers
       localStorage.setItem("access_token", token);
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      await refreshUser();
+      await Promise.all([refreshUser(), refreshChildren()]);
       navigate("/dashboard");
     } catch (err) {
       console.error("Login failed", err);
@@ -49,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ✅ Register user
   const register = async (email: string, password: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password });
@@ -59,6 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // ✅ Logout
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -68,23 +85,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem("access_token");
       delete axiosInstance.defaults.headers.common["Authorization"];
       setUser(null);
+      setChildren([]);
       navigate("/login");
     }
   };
 
+  // ✅ On load, check token
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (token) {
       axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      refreshUser();
+      Promise.all([refreshUser(), refreshChildren()]);
     } else {
       setLoading(false);
     }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        children, // ✅ Provided to consumer
+        login,
+        register,
+        logout,
+        refreshUser,
+        refreshChildren, // ✅ Provided to consumer
+      }}
+    >
+      {appChildren}
     </AuthContext.Provider>
   );
 };
