@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { Plus, Trash, Pencil } from "lucide-react";
 import { toast } from "react-toastify";
 import { motion, AnimatePresence } from "framer-motion";
+
 import { Button } from "@/components/ui/Button";
 import {
   Dialog,
@@ -15,7 +16,13 @@ import {
 import { Card, CardContent, CardTitle } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/Select";
 
 interface ChildProfile {
   id: number;
@@ -33,7 +40,7 @@ const Profile: React.FC = () => {
   const [editChild, setEditChild] = useState<ChildProfile | null>(null);
   const [formData, setFormData] = useState({
     name: "",
-    age: "",
+    age: "", // ✅ string for input
     gender: "male",
     behavioral_traits: "",
     emotional_state: "",
@@ -78,12 +85,17 @@ const Profile: React.FC = () => {
       return;
     }
 
+    const payload = {
+      ...formData,
+      age: Number(formData.age), // ✅ important
+    };
+
     try {
       if (editChild) {
-        await axiosInstance.put(`/auth/child/${editChild.id}`, formData);
+        await axiosInstance.put(`/auth/child/${editChild.id}`, payload);
         toast.success("Profile updated!");
       } else {
-        await axiosInstance.post("/auth/child/", formData);
+        await axiosInstance.post("/auth/child/", payload);
         toast.success("Profile added!");
       }
 
@@ -91,7 +103,7 @@ const Profile: React.FC = () => {
       setEditChild(null);
       setFormData({
         name: "",
-        age: Number(formData.age),
+        age: "",
         gender: "male",
         behavioral_traits: "",
         emotional_state: "",
@@ -198,7 +210,14 @@ const Profile: React.FC = () => {
             </div>
             <div>
               <Label>Age</Label>
-              <Input name="age" type="number" min="1" max="18" value={formData.age} onChange={handleFormChange}/>
+              <Input
+                name="age"
+                type="number"
+                min="1"
+                max="18"
+                value={formData.age}
+                onChange={handleFormChange}
+              />
               {formErrors.age && <p className="text-sm text-red-500 mt-1">{formErrors.age}</p>}
             </div>
             <div>
@@ -235,4 +254,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-// This code defines a Profile page where users can manage child profiles.
