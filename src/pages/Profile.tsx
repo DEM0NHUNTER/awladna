@@ -42,7 +42,7 @@ const Profile: React.FC = () => {
   const loadChildren = async () => {
     setIsLoading(true);
     try {
-      const res = await axiosInstance.get("/auth/child/");
+      const res = await axiosInstance.get("/auth/child");
       setChildren(res.data);
     } catch (err) {
       console.error("Failed to fetch children:", err);
@@ -114,7 +114,7 @@ const Profile: React.FC = () => {
         await axiosInstance.put(`/auth/child${editChild.child_id}`, payload);
         toast.success("Profile updated!");
       } else {
-        await axiosInstance.post("/auth/child/", payload);
+        await axiosInstance.post("/auth/child", payload);
         toast.success("Profile added!");
       }
 
