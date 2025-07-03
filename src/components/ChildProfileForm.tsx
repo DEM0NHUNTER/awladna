@@ -75,7 +75,7 @@ const ChildProfileForm: React.FC<Props> = ({
       </div>
 
       <div className="flex justify-end gap-2 pt-4">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" variant="secondary" onClick={() => onCancel?.()}>
           Cancel
         </Button>
         <Button type="submit">Save</Button>

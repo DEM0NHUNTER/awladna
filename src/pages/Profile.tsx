@@ -111,7 +111,7 @@ const Profile: React.FC = () => {
       };
 
       if (editChild) {
-        await axiosInstance.put(`/auth/child${editChild.child_id}/`, payload);
+        await axiosInstance.put(`/auth/child/${editChild.child_id}/`, payload);
         toast.success("Profile updated!");
       } else {
         await axiosInstance.post("/auth/child/", payload);
@@ -198,7 +198,7 @@ const Profile: React.FC = () => {
                 <Card>
                   <CardContent className="p-4">
                     <CardTitle>{child.name}</CardTitle>
-                    <p className="text-sm">DOB: {child.birth_date}</p>
+                    <p className="text-sm">Age: {child.age} years</p>
                     <p className="text-sm capitalize">Gender: {child.gender}</p>
                     <p className="text-sm">Mood: {child.behavioral_patterns?.mood}</p>
                     <p className="text-sm">Status: {child.emotional_state?.status}</p>
