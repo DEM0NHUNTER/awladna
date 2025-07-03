@@ -76,7 +76,7 @@ const Profile: React.FC = () => {
   const handleChildDelete = (id: number) => setChildren(children.filter(c => c.id !== id));
 
   // Determine childId for Sidebar: use first child if available, else '1'
-  const sidebarChildId = children?.length > 0 ? children?[0].id.toString() : '1';
+  const sidebarChildId = children?.length > 0 ? children?.[0].id.toString() : '1';
 
   // Sidebar open/collapse state
   const [sidebarOpen, setSidebarOpen] = useState(false); // for mobile
