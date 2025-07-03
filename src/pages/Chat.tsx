@@ -5,7 +5,7 @@ import { useChatContext } from "../context/ChatContext";
 import axiosInstance from "../api/axiosInstance";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import  Input  from "@/components/ui/Input";
 
 interface Message {
   role: "user" | "assistant";
