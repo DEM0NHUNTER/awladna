@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
     const fetchDashboardData = async () => {
       try {
         const [analyticsRes, recsRes] = await Promise.all([
-          axiosInstance.get("/auth/feedback-analytics/"),
+          axiosInstance.get("/auth/analytics/feedback-analytics/"),
           children?.[0]?.child_id
             ? axiosInstance.get("/auth/recommendation/", {
                 params: { child_id: children[0].child_id }, // ✅ Send child_id
@@ -137,6 +137,28 @@ const Dashboard: React.FC = () => {
             ))
           ) : (
             <p className="text-sm text-gray-500">No recommendations available.</p>
+          )}
+        </section>
+        {/* 6. Feedback Analytics Card */}
+        <section className="bg-white rounded-2xl p-6 shadow mb-10">
+          <h2 className="text-lg font-bold mb-3">Feedback Summary</h2>
+          {analytics ? (
+            <div className="grid sm:grid-cols-3 gap-4 text-sm text-gray-700">
+              <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                <p className="text-3xl font-bold text-indigo-600">{analytics.total_feedback}</p>
+                <p>Total Feedback</p>
+              </div>
+              <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                <p className="text-3xl font-bold text-indigo-600">{analytics.average_rating}⭐</p>
+                <p>Average Rating</p>
+              </div>
+              <div className="bg-indigo-50 p-4 rounded-xl text-center">
+                <p className="text-3xl font-bold text-indigo-600">{analytics.improvement_rate}</p>
+                <p>Improvement Rate</p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No analytics data available yet.</p>
           )}
         </section>
       )}
