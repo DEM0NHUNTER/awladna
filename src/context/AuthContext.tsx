@@ -1,13 +1,13 @@
+// src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { User } from "../types/user";
 
-// Context interface
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  children: any[];
+  childProfiles: any[];                    // renamed
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -15,16 +15,14 @@ interface AuthContextType {
   refreshChildren: () => Promise<void>;
 }
 
-// ✅ Safe context creation (initially undefined)
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [childrenProfiles, setChildrenProfiles] = useState<any[]>([]);
+  const [childProfiles, setChildProfiles] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  // ✅ Get current user
   const refreshUser = async () => {
     try {
       const res = await axiosInstance.get("/me");
@@ -36,45 +34,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Get child profiles
   const refreshChildren = async () => {
     try {
       const res = await axiosInstance.get("/auth/child/");
-      setChildrenProfiles(res.data);
+      setChildProfiles(res.data);
     } catch (err) {
       console.error("Failed to fetch children:", err);
-      setChildrenProfiles([]);
+      setChildProfiles([]);
     }
   };
 
-  // ✅ Login flow
   const login = async (email: string, password: string) => {
-    try {
-      const res = await axiosInstance.post("/auth/login", { email, password });
-      const token = res.data.access_token;
-
-      localStorage.setItem("access_token", token);
-      axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
-      await Promise.all([refreshUser(), refreshChildren()]);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Login failed", err);
-      throw err;
-    }
+    const res = await axiosInstance.post("/auth/login", { email, password });
+    const token = res.data.access_token;
+    localStorage.setItem("access_token", token);
+    axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    await Promise.all([refreshUser(), refreshChildren()]);
+    navigate("/dashboard");
   };
 
-  // ✅ Register flow
   const register = async (email: string, password: string) => {
-    try {
-      await axiosInstance.post("/auth/register", { email, password });
-    } catch (err) {
-      console.error("Registration failed", err);
-      throw err;
-    }
+    await axiosInstance.post("/auth/register", { email, password });
   };
 
-  // ✅ Logout
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -84,15 +66,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem("access_token");
       delete axiosInstance.defaults.headers.common["Authorization"];
       setUser(null);
-      setChildrenProfiles([]);
+      setChildProfiles([]);
       navigate("/login");
     }
   };
 
-  // ✅ Init on mount
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-
     const initialize = async () => {
       if (token) {
         axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -101,7 +81,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLoading(false);
       }
     };
-
     initialize();
   }, []);
 
@@ -110,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
-        children: childrenProfiles,
+        childProfiles,
         login,
         register,
         logout,
@@ -123,8 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// ✅ Custom hook with safety guard
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
