@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import { useChatContext } from "../../context/ChatContext";
-import axiosInstance from "../../api/axiosInstance";
+import { useAuth } from "../context/AuthContext";
+import { useChatContext } from "../context/ChatContext";
+import axiosInstance from "../api/axiosInstance";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
