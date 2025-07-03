@@ -68,7 +68,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (email: string, password: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password });
-      navigate("/login");
     } catch (err) {
       console.error("Registration failed", err);
       throw err;
