@@ -13,13 +13,12 @@ const Register: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
 
   useEffect(() => {
-    if (auth.user) {
+    if (auth?.user) {
       navigate("/dashboard");
     }
-  }, [auth.user, navigate]);
+  }, [auth?.user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +37,7 @@ const Register: React.FC = () => {
     setLoading(true);
     try {
       await auth.register(email, password);
-      setShowVerificationPrompt(true);
+      navigate("/login");
     } catch {
       setError(t("errors.registrationFailed", "Registration failed. Please try again."));
     } finally {
@@ -46,34 +45,53 @@ const Register: React.FC = () => {
     }
   };
 
-  if (!auth.register) {
-    return (
-      <div className="text-center text-red-600 font-bold mt-20">
-        {t("errors.authNotReady", "Authentication system is not available.")}
-      </div>
-    );
-  }
+  const LanguageSwitcher = () => {
+    const [open, setOpen] = useState(false);
+    const languages = [
+      { code: "en", label: "English" },
+      { code: "ar", label: "العربية" },
+    ];
+    const current = languages.find((l) => l.code === i18n.language) || languages[0];
 
-  if (showVerificationPrompt) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4">{t("verifyYourEmail", "Verify Your Email")}</h1>
-        <p className="text-gray-600 mb-6">
-          {t("verificationEmailSent", "A verification email has been sent. Please check your inbox and spam folder.")}
-        </p>
+      <div className="relative">
         <button
-          onClick={() => navigate("/verify-email")}
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-50 transition text-gray-700 font-semibold focus:outline-none"
+          onClick={() => setOpen((o) => !o)}
         >
-          {t("goToVerification", "Go to Verification Page")}
+          <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
+          </svg>
+          <span>{current.label}</span>
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
+        {open && (
+          <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            {languages.map((lang) => (
+              <button
+                key={lang.code}
+                className={`block w-full text-left px-4 py-2 hover:bg-blue-50 transition ${
+                  i18n.language === lang.code ? "bg-blue-100 font-bold" : ""
+                }`}
+                onClick={() => {
+                  i18n.changeLanguage(lang.code);
+                  setOpen(false);
+                }}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
-  }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f3f6fd] py-12 px-4 sm:px-6 lg:px-8 relative">
-      {/* Language Switcher */}
       <div className="absolute top-6 right-6 z-50">
         <LanguageSwitcher />
       </div>
@@ -83,9 +101,7 @@ const Register: React.FC = () => {
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             {t("createAccount", "Create Account")}
           </h1>
-          <p className="text-gray-600">
-            {t("joinUs", "Join us and start your parenting journey")}
-          </p>
+          <p className="text-gray-600">{t("joinUs", "Join us and start your parenting journey")}</p>
         </div>
 
         <div className="bg-white rounded-2xl shadow-xl p-8">
@@ -96,7 +112,6 @@ const Register: React.FC = () => {
               </div>
             )}
 
-            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("emailAddress", "Email Address")}
@@ -104,7 +119,7 @@ const Register: React.FC = () => {
               <input
                 id="email"
                 type="email"
-                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
                 placeholder={t("enterEmail", "Enter your email")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -113,7 +128,6 @@ const Register: React.FC = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("password", "Password")}
@@ -121,7 +135,7 @@ const Register: React.FC = () => {
               <input
                 id="password"
                 type="password"
-                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
                 placeholder={t("enterPassword", "Create a password")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -131,7 +145,6 @@ const Register: React.FC = () => {
               <p className="mt-1 text-xs text-gray-500">{t("passwordMinLength", "Must be at least 6 characters")}</p>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("confirmPassword", "Confirm Password")}
@@ -139,7 +152,7 @@ const Register: React.FC = () => {
               <input
                 id="confirmPassword"
                 type="password"
-                className="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
                 placeholder={t("enterConfirmPassword", "Confirm your password")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -148,33 +161,51 @@ const Register: React.FC = () => {
               />
             </div>
 
-            {/* Terms */}
             <div className="flex items-center">
               <input
                 id="terms"
+                name="terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="terms" className="ml-2 text-sm text-gray-700">
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
                 {t("agreeTo", "I agree to the")}&nbsp;
-                <Link to="/terms" className="text-blue-600 hover:underline font-medium">
+                <Link to="/terms" className="text-blue-600 hover:text-blue-500 font-medium">
                   {t("termsOfService", "Terms of Service")}
                 </Link>{" "}
                 {t("and", "and")}&nbsp;
-                <Link to="/privacy" className="text-blue-600 hover:underline font-medium">
+                <Link to="/privacy" className="text-blue-600 hover:text-blue-500 font-medium">
                   {t("privacyPolicy", "Privacy Policy")}
                 </Link>
               </label>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 px-4 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 disabled:opacity-50"
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
             >
-              {loading ? t("creatingAccount", "Creating account...") : t("createAccount", "Create Account")}
+              {loading ? (
+                <div className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                  {t("creatingAccount", "Creating account...")}
+                </div>
+              ) : (
+                t("createAccount", "Create Account")
+              )}
             </button>
           </form>
 
@@ -186,49 +217,6 @@ const Register: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const languages = [
-    { code: "en", label: "English" },
-    { code: "ar", label: "العربية" },
-  ];
-  const current = languages.find((l) => l.code === i18n.language) || languages[0];
-
-  return (
-    <div className="relative">
-      <button
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-50"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Change language"
-      >
-        <span>{current.label}</span>
-        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              className={`block w-full text-left px-4 py-2 hover:bg-blue-50 ${
-                i18n.language === lang.code ? "bg-blue-100 font-bold" : ""
-              }`}
-              onClick={() => {
-                i18n.changeLanguage(lang.code);
-                setOpen(false);
-              }}
-            >
-              {lang.label}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
