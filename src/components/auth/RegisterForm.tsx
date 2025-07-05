@@ -1,3 +1,5 @@
+/* eslint no-undef: "error" */
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
@@ -14,12 +16,14 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Redirect if user already logged in
   useEffect(() => {
     if (auth?.user) {
       navigate("/dashboard");
     }
   }, [auth?.user, navigate]);
 
+  // Guard against missing context
   if (!auth?.register) {
     return (
       <div className="text-center text-red-600 font-bold mt-20">
@@ -55,11 +59,6 @@ const RegisterForm: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f3f6fd] py-12 px-4 sm:px-6 lg:px-8 relative">
-      {/* Language Switcher */}
-      <div className="absolute top-6 right-6 z-50">
-        <LanguageSwitcher />
-      </div>
-
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -132,60 +131,23 @@ const RegisterForm: React.FC = () => {
               />
             </div>
 
-            {/* Terms */}
-            <div className="flex items-center">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                required
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-                {t("agreeTo", "I agree to the")}&nbsp;
-                <Link to="/terms" className="text-blue-600 hover:text-blue-500 font-medium">
-                  {t("termsOfService", "Terms of Service")}
-                </Link>{" "}
-                {t("and", "and")}&nbsp;
-                <Link to="/privacy" className="text-blue-600 hover:text-blue-500 font-medium">
-                  {t("privacyPolicy", "Privacy Policy")}
-                </Link>
-              </label>
-            </div>
-
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md"
+              className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? (
-                <div className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  {t("creatingAccount", "Creating account...")}
-                </div>
-              ) : (
-                t("createAccount", "Create Account")
-              )}
+              {loading
+                ? t("creatingAccount", "Creating account...")
+                : t("createAccount", "Create Account")}
             </button>
           </form>
 
+          {/* Login Link */}
           <div className="mt-6 text-center text-sm text-gray-600">
             {t("alreadyHaveAccount", "Already have an account?")}&nbsp;
             <Link to="/login" className="text-blue-600 hover:underline">
-              {t("signInToExisting", "Sign in to existing account")}
+              {t("signInToExisting", "Sign in")}
             </Link>
           </div>
         </div>
