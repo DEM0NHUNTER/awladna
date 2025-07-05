@@ -15,7 +15,7 @@ class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error) {
-    console.error("RegisterForm error:", error);
+    console.error("error:", error);
   }
 
   render() {
