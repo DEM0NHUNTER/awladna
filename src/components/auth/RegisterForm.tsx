@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { format } from "date-fns"; // ✅ correct
 
 const RegisterForm: React.FC = () => {
-  const auth = useAuth();
+  const { childProfiles, register, user } = useAuth(); // ✅ updated destructuring
   const navigate = useNavigate();
   const { t } = useTranslation();
 
