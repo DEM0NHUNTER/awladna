@@ -2,12 +2,12 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
 import { User } from "../types/user";
+import { ChildProfile } from "../types/chat";
 
-// Context interface
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  children: any[];
+  children: ChildProfile[];
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -15,16 +15,14 @@ interface AuthContextType {
   refreshChildren: () => Promise<void>;
 }
 
-// ✅ Safe context creation (initially undefined)
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [childrenProfiles, setChildrenProfiles] = useState<any[]>([]);
+  const [childrenProfiles, setChildrenProfiles] = useState<ChildProfile[]>([]);
   const navigate = useNavigate();
 
-  // ✅ Get current user
   const refreshUser = async () => {
     try {
       const res = await axiosInstance.get("/me");
@@ -36,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Get child profiles
   const refreshChildren = async () => {
     try {
       const res = await axiosInstance.get("/auth/child/");
@@ -47,7 +44,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Login flow
   const login = async (email: string, password: string) => {
     try {
       const res = await axiosInstance.post("/auth/login", { email, password });
@@ -64,7 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Register flow
   const register = async (email: string, password: string) => {
     try {
       await axiosInstance.post("/auth/register", { email, password });
@@ -74,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Logout
   const logout = async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -89,19 +83,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // ✅ Init on mount
   useEffect(() => {
     const token = localStorage.getItem("access_token");
-
     const initialize = async () => {
       if (token) {
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer token`;
         await Promise.all([refreshUser(), refreshChildren()]);
       } else {
         setLoading(false);
       }
     };
-
     initialize();
   }, []);
 
@@ -123,11 +114,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// ✅ Custom hook with safety guard
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };

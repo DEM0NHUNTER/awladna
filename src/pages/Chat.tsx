@@ -1,30 +1,22 @@
-// src/pages/Chat.tsx
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useChatContext } from "../context/ChatContext";
 import axiosInstance from "../api/axiosInstance";
-import { Send } from "lucide-react";
+import { Message, ChildProfile } from "../types/chat";
 import { Button } from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: string;
-}
+import { Send } from "lucide-react";
 
 const Chat: React.FC = () => {
-  const auth = useAuth();
+  const { children } = useAuth();
   const { chats, setChats } = useChatContext();
-  const children = auth.children || [];
 
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedChild =
-    children.find((c) => c.child_id === selectedChildId) || null;
+  const selectedChild: ChildProfile | undefined = children.find(c => c.child_id === selectedChildId);
 
   useEffect(() => {
     if (selectedChildId) {
@@ -33,6 +25,10 @@ const Chat: React.FC = () => {
       setChats([]);
     }
   }, [selectedChildId]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chats]);
 
   const fetchChatHistory = async (childId: number) => {
     try {
@@ -48,14 +44,6 @@ const Chat: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [chats]);
-
-  const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const handleSend = async () => {
     if (!message.trim()) return;
 
@@ -65,7 +53,7 @@ const Chat: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
 
-    setChats((prev) => [...prev, userMessage]);
+    setChats(prev => [...prev, userMessage]);
     setMessage("");
     setLoading(true);
 
@@ -82,7 +70,7 @@ const Chat: React.FC = () => {
         timestamp: res.data?.timestamp || new Date().toISOString(),
       };
 
-      setChats((prev) => [...prev, aiMessage]);
+      setChats(prev => [...prev, aiMessage]);
     } catch (err) {
       console.error("Failed to send chat message", err);
     } finally {
@@ -112,10 +100,7 @@ const Chat: React.FC = () => {
         ) : (
           <p className="text-sm text-gray-500">
             No child profiles found.{" "}
-            <a href="/profile" className="text-indigo-600 underline">
-              Create one
-            </a>
-            .
+            <a href="/profile" className="text-indigo-600 underline">Create one</a>.
           </p>
         )}
       </div>
@@ -135,14 +120,12 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Box */}
+      {/* Chat Bubbles */}
       <div className="flex-1 overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50">
         {chats.map((msg, index) => (
           <div
             key={index}
-            className={`max-w-xl ${
-              msg.role === "user" ? "ml-auto text-right" : "text-left"
-            }`}
+            className={`max-w-xl ${msg.role === "user" ? "ml-auto text-right" : "text-left"}`}
           >
             <div
               className={`inline-block px-4 py-2 rounded-lg ${
