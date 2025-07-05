@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { format } from "date-fns"; // ✅ correct
+import { format } from "date-fns";
+import toast from "react-hot-toast";
 
 const RegisterForm: React.FC = () => {
-  const { childProfiles, register, user } = useAuth(); // ✅ updated destructuring
+  const { user, register, childProfiles } = useAuth(); // ✅ fixed
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -17,15 +18,11 @@ const RegisterForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if user already logged in
   useEffect(() => {
-    if (auth?.user) {
-      navigate("/dashboard");
-    }
-  }, [auth?.user, navigate]);
+    if (user) navigate("/dashboard");
+  }, [user, navigate]);
 
-  // Guard against missing context
-  if (!auth?.register) {
+  if (!register) {
     return (
       <div className="text-center text-red-600 font-bold mt-20">
         {t("errors.authNotReady", "Authentication system is not available.")}
@@ -49,7 +46,8 @@ const RegisterForm: React.FC = () => {
 
     setLoading(true);
     try {
-      await auth.register(email, password);
+      await register(email, password);
+      toast.success(t("registeredSuccessfully", "Registered successfully")); // ✅ toast
       navigate("/login");
     } catch {
       setError(t("errors.registrationFailed", "Registration failed. Please try again."));
@@ -78,7 +76,6 @@ const RegisterForm: React.FC = () => {
               </div>
             )}
 
-            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("emailAddress", "Email Address")}
@@ -95,7 +92,6 @@ const RegisterForm: React.FC = () => {
               />
             </div>
 
-            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("password", "Password")}
@@ -115,7 +111,6 @@ const RegisterForm: React.FC = () => {
               </p>
             </div>
 
-            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 {t("confirmPassword", "Confirm Password")}
@@ -132,7 +127,6 @@ const RegisterForm: React.FC = () => {
               />
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -144,7 +138,6 @@ const RegisterForm: React.FC = () => {
             </button>
           </form>
 
-          {/* Login Link */}
           <div className="mt-6 text-center text-sm text-gray-600">
             {t("alreadyHaveAccount", "Already have an account?")}&nbsp;
             <Link to="/login" className="text-blue-600 hover:underline">
@@ -153,53 +146,6 @@ const RegisterForm: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-const LanguageSwitcher = () => {
-  const { i18n } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const languages = [
-    { code: "en", label: "English" },
-    { code: "ar", label: "العربية" },
-  ];
-  const current = languages.find((l) => l.code === i18n.language) || languages[0];
-
-  return (
-    <div className="relative">
-      <button
-        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 shadow hover:bg-gray-50 transition text-gray-700 font-semibold focus:outline-none"
-        onClick={() => setOpen((o) => !o)}
-        aria-label="Change language"
-      >
-        <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
-        </svg>
-        <span>{current.label}</span>
-        <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-          <path d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              className={`block w-full text-left px-4 py-2 hover:bg-blue-50 transition ${
-                i18n.language === lang.code ? "bg-blue-100 font-bold" : ""
-              }`}
-              onClick={() => {
-                i18n.changeLanguage(lang.code);
-                setOpen(false);
-              }}
-            >
-              {lang.label}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
