@@ -1,5 +1,5 @@
+// src/pages/Chat.tsx
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useChatContext } from "../context/ChatContext";
 import axiosInstance from "../api/axiosInstance";
@@ -15,21 +15,16 @@ interface Message {
 
 const Chat: React.FC = () => {
   const auth = useAuth();
-  const navigate = useNavigate();
   const { chats, setChats } = useChatContext();
+  const children = auth.children || [];
 
   const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  const selectedChild = childProfiles .find((c) => c.child_id === selectedChildId) || null;
-
-  useEffect(() => {
-    if (!auth.user && !auth.loading) {
-      navigate("/login");
-    }
-  }, [auth.user, auth.loading, navigate]);
+  const selectedChild =
+    children.find((c) => c.child_id === selectedChildId) || null;
 
   useEffect(() => {
     if (selectedChildId) {
@@ -54,11 +49,15 @@ const Chat: React.FC = () => {
   };
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollToBottom();
   }, [chats]);
 
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const handleSend = async () => {
-    if (!message.trim() || !selectedChildId) return;
+    if (!message.trim()) return;
 
     const userMessage: Message = {
       role: "user",
@@ -91,25 +90,22 @@ const Chat: React.FC = () => {
     }
   };
 
-  if (auth.loading) return <div className="p-8 text-center">Loading...</div>;
-  if (!auth.user) return <div className="p-8 text-center text-red-600">You are not logged in.</div>;
-
   return (
-    <div className="min-h-screen p-6 bg-white flex flex-col max-w-3xl mx-auto">
+    <div className="min-h-screen p-6 bg-white flex flex-col">
       <h1 className="text-2xl font-bold mb-4">Chat with Awladna AI</h1>
 
       {/* Child Selector */}
       <div className="mb-4">
-        {childProfiles .length > 0 ? (
+        {children.length > 0 ? (
           <select
-            className="p-2 border rounded-md w-full text-gray-800"
+            className="p-2 border rounded-md text-gray-800"
             value={selectedChildId ?? ""}
             onChange={(e) => setSelectedChildId(Number(e.target.value))}
           >
             <option value="">Choose a child to focus on</option>
-            {childProfiles.map((child) => (
+            {children.map((child) => (
               <option key={child.child_id} value={child.child_id}>
-                {child.name} (Age: {child.age}, {child.gender})
+                {child.name} ({child.age}, {child.gender})
               </option>
             ))}
           </select>
@@ -127,7 +123,7 @@ const Chat: React.FC = () => {
       {/* Selected Child Info */}
       {selectedChild && (
         <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded mb-4">
-          <div className="w-10 h-10 bg-indigo-300 rounded-full flex items-center justify-center text-white font-bold uppercase">
+          <div className="w-10 h-10 bg-indigo-200 rounded-full flex items-center justify-center text-white font-bold uppercase">
             {selectedChild.name.charAt(0)}
           </div>
           <div>
@@ -139,39 +135,33 @@ const Chat: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Messages */}
+      {/* Chat Box */}
       <div className="flex-1 overflow-y-auto border rounded-lg p-4 space-y-4 bg-gray-50">
-        {selectedChildId ? (
-          <>
-            {chats.map((msg, index) => (
-              <div
-                key={index}
-                className={`max-w-xl ${
-                  msg.role === "user" ? "ml-auto text-right" : "text-left"
-                }`}
-              >
-                <div
-                  className={`inline-block px-4 py-2 rounded-lg ${
-                    msg.role === "user"
-                      ? "bg-indigo-500 text-white"
-                      : "bg-white border"
-                  }`}
-                >
-                  {msg.content}
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </>
-        ) : (
-          <p className="text-gray-500">Please select a child to begin the conversation.</p>
-        )}
+        {chats.map((msg, index) => (
+          <div
+            key={index}
+            className={`max-w-xl ${
+              msg.role === "user" ? "ml-auto text-right" : "text-left"
+            }`}
+          >
+            <div
+              className={`inline-block px-4 py-2 rounded-lg ${
+                msg.role === "user"
+                  ? "bg-indigo-500 text-white"
+                  : "bg-white border"
+              }`}
+            >
+              {msg.content}
+            </div>
+            <div className="text-xs text-gray-400 mt-1">
+              {new Date(msg.timestamp).toLocaleTimeString()}
+            </div>
+          </div>
+        ))}
+        <div ref={chatEndRef} />
       </div>
 
-      {/* Chat Input */}
+      {/* Input */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -184,9 +174,9 @@ const Chat: React.FC = () => {
           placeholder="Type your message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          disabled={loading || !selectedChildId}
+          disabled={loading}
         />
-        <Button type="submit" disabled={loading || !message.trim() || !selectedChildId}>
+        <Button type="submit" disabled={loading || !message.trim()}>
           <Send size={18} />
         </Button>
       </form>
