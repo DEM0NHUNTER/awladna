@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Header from "./components/layout/Header";
 import Navbar from "./components/layout/Navbar";
+import { Toaster } from "react-hot-toast";
 
 import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
@@ -26,6 +27,7 @@ const App: React.FC = () => {
         <div className="flex flex-col min-h-screen">
           <Routes>
             {/* All routes accessible without authentication */}
+            <Toaster position="top-right" />
             <Route
               path="/login"
               element={

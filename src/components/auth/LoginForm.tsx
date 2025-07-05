@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+import toast from "react-hot-toast";
 
 const LoginForm: React.FC = () => {
   const { login } = useAuth();
@@ -20,6 +21,7 @@ const LoginForm: React.FC = () => {
     setLoading(true);
     try {
       await login(email, password);
+      toast.success("Logged in successfully!");
     } catch {
       setError("Invalid email or password");
     } finally {
