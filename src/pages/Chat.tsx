@@ -1,3 +1,4 @@
+//src/pages/Chat.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useChatContext } from "../context/ChatContext";

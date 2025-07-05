@@ -1,3 +1,4 @@
+//src/context/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../api/axiosInstance";
@@ -87,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem("access_token");
     const initialize = async () => {
       if (token) {
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer token`;
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         await Promise.all([refreshUser(), refreshChildren()]);
       } else {
         setLoading(false);
