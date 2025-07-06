@@ -37,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshChildren = async () => {
     try {
-      const res = await axiosInstance.get("/auth/child/");
+      const res = await axiosInstance.get("/auth/child");
       setChildrenProfiles(res.data);
     } catch (err) {
       console.error("Failed to fetch children:", err);
