@@ -19,12 +19,20 @@ export interface Chat {
   messages: ChatMessage[];
 }
 
+interface CurrentChild {
+  id: number;
+  name: string;
+  age: number;
+}
+
 interface ChatContextType {
   chats: Chat[];
   currentChatId: string | null;
   setCurrentChatId: (id: string | null) => void;
   addMessageToChat: (chatId: string, message: ChatMessage) => void;
-  createNewChat: (childId: number, childName: string, childAge: number) => void;
+  createNewChat: () => void;
+  currentChild: CurrentChild | null;
+  setCurrentChild: (child: CurrentChild | null) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -32,6 +40,21 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [currentChild, setCurrentChild] = useState<CurrentChild | null>(null);
+
+  const createNewChat = () => {
+    if (!currentChild) return;
+
+    const newChat: Chat = {
+      id: Date.now().toString(),
+      childId: currentChild.id,
+      childName: currentChild.name,
+      childAge: currentChild.age,
+      messages: [],
+    };
+    setChats(prev => [...prev, newChat]);
+    setCurrentChatId(newChat.id);
+  };
 
   const addMessageToChat = (chatId: string, message: ChatMessage) => {
     setChats(prev =>
@@ -41,31 +64,27 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
-  const createNewChat = (childId: number, childName: string, childAge: number) => {
-    const newChat: Chat = {
-      id: Date.now().toString(),
-      childId,
-      childName,
-      childAge,
-      messages: [],
-    };
-    setChats(prev => [...prev, newChat]);
-    setCurrentChatId(newChat.id);
-  };
-
   return (
-    <ChatContext.Provider value={{ chats, currentChatId, setCurrentChatId, addMessageToChat, createNewChat }}>
+    <ChatContext.Provider
+      value={{
+        chats,
+        currentChatId,
+        setCurrentChatId,
+        addMessageToChat,
+        createNewChat,
+        currentChild,
+        setCurrentChild,
+      }}
+    >
       {children}
     </ChatContext.Provider>
   );
 };
 
-export const useChatContext = (): ChatContextType => {
+export const useChatContext = () => {
   const context = useContext(ChatContext);
   if (!context) {
     throw new Error('useChatContext must be used within a ChatProvider');
   }
   return context;
 };
-
-export default ChatContext;

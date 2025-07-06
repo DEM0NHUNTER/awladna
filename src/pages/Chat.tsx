@@ -3,86 +3,113 @@ import React, { useEffect, useState, useRef } from 'react';
 import Sidebar from '../components/layout/Sidebar';
 import MessageInput from '../components/chat/MessageInput';
 import { useChatContext } from '../context/ChatContext';
+import { useAuth } from '../context/AuthContext';
+import { fetchChatResponse } from '../api/chat';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { fetchChatResponse } from '../api/chat';
+
+interface Child {
+  id: number;
+  name: string;
+  age: number;
+}
 
 const ChatPage: React.FC = () => {
-  const { chats, currentChatId, addMessageToChat } = useChatContext();
+  const { token } = useAuth();
+  const {
+    chats,
+    currentChatId,
+    currentChild,
+    setCurrentChild,
+    setCurrentChatId,
+    addMessageToChat,
+    createNewChat,
+  } = useChatContext();
   const currentChat = chats.find(chat => chat.id === currentChatId);
+  const [children, setChildren] = useState<Child[]>([]);
+  const [loadingChildren, setLoadingChildren] = useState(true);
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false); // for mobile
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // for desktop
-  const [showHistory, setShowHistory] = useState(false);
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === 'ar';
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [currentChat?.messages]);
-
-  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-    const sendMessage = async () => {
-      if (!input.trim() || !currentChatId || !currentChat) return;
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [currentChat?.messages]);
 
-      const userMessage = {
-        id: Date.now().toString(),
-        text: input.trim(),
-        fromChild: true,
-        timestamp: new Date().toISOString(),
-      };
-
-      addMessageToChat(currentChatId, userMessage);
-      setInput('');
-      setIsTyping(true);
-      setError(null);
-
+  // Fetch children
+  useEffect(() => {
+    const fetchChildren = async () => {
+      setLoadingChildren(true);
       try {
-        const aiData = await fetchChatResponse({
-          user_input: userMessage.text,
-          child_id: currentChat.childId,
-          child_age: currentChat.childAge,
-          child_name: currentChat.childName,
+        const res = await fetch('/api/auth/child', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-
-        const aiMessage = {
-          id: `${Date.now()}_ai`,
-          text: aiData.response,
-          fromChild: false,
-          timestamp: new Date().toISOString(),
-          sentiment: aiData.sentiment,
-          sentiment_score: aiData.sentiment_score,
-          suggestions: aiData.suggested_actions,
-        };
-
-        addMessageToChat(currentChatId, aiMessage);
-      } catch (err: any) {
-        setError(err.message || 'An unexpected error occurred.');
+        if (!res.ok) throw new Error('Failed to load child profiles');
+        const data = await res.json();
+        setChildren(data.children || []);
+      } catch (err) {
+        setError('Unable to load children.');
       } finally {
-        setIsTyping(false);
+        setLoadingChildren(false);
       }
     };
 
-  const formatTime = (timestamp?: string) => {
-    if (!timestamp) return '';
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    if (token) fetchChildren();
+  }, [token]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || !currentChatId || !currentChat) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      text: input.trim(),
+      fromChild: true,
+      timestamp: new Date().toISOString(),
+    };
+
+    addMessageToChat(currentChatId, userMessage);
+    setInput('');
+    setIsTyping(true);
+    setError(null);
+
+    try {
+      const aiData = await fetchChatResponse({
+        user_input: userMessage.text,
+        child_id: currentChat.childId,
+        child_age: currentChat.childAge,
+        child_name: currentChat.childName,
+      });
+
+      const aiMessage = {
+        id: `${Date.now()}_ai`,
+        text: aiData.response,
+        fromChild: false,
+        timestamp: new Date().toISOString(),
+        sentiment: aiData.sentiment,
+        sentiment_score: aiData.sentiment_score,
+        suggestions: aiData.suggested_actions,
+      };
+
+      addMessageToChat(currentChatId, aiMessage);
+    } catch (err: any) {
+      setError(err.message || 'An unexpected error occurred.');
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  // Play TTS for a message
   const playTTS = async (messageId: string, text: string) => {
     setPlayingMessageId(messageId);
     try {
@@ -108,7 +135,6 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  // Stop audio if user navigates away
   useEffect(() => {
     return () => {
       if (audio) {
@@ -118,147 +144,125 @@ const ChatPage: React.FC = () => {
     };
   }, [audio]);
 
+  const handleChildSelect = (id: number) => {
+    const child = children.find(c => c.id === id);
+    if (child) {
+      setCurrentChild({ id: child.id, name: child.name, age: child.age });
+      createNewChat();
+    }
+  };
+
   return (
-    <div className={`min-h-screen bg-white flex flex-row ${isRTL ? 'flex-row-reverse' : ''}`}>
-      {/* Sidebar: fixed on desktop, overlays on mobile */}
-      {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col h-full z-30 bg-gradient-to-b from-[#000080] to-[#000080]/90 shadow-xl fixed top-0 ${isRTL ? 'right-0' : 'left-0'} transition-all duration-300 ${sidebarCollapsed ? 'w-20' : 'w-80'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-        <Sidebar childId={"1"} collapsed={sidebarCollapsed} showHistory={showHistory} setShowHistory={setShowHistory} />
-        {/* Collapse/Expand Button */}
-        <button
-          className={`absolute bottom-4 ${isRTL ? 'left-4' : 'right-4'} bg-white/20 text-white rounded-full p-2 hover:bg-white/30 transition md:block hidden`}
-          onClick={() => setSidebarCollapsed(c => !c)}
-          aria-label={sidebarCollapsed ? t('expandSidebar', 'Expand sidebar') : t('collapseSidebar', 'Collapse sidebar')}
-        >
-          {sidebarCollapsed ? (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-          ) : (
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-          )}
-        </button>
+    <div className={`min-h-screen flex flex-row bg-white ${isRTL ? 'flex-row-reverse' : ''}`}>
+      {/* Sidebar */}
+      <aside className={`hidden md:flex flex-col h-full fixed z-30 top-0 ${isRTL ? 'right-0' : 'left-0'} w-64 bg-[#000080] text-white shadow-xl`}>
+        <Sidebar />
       </aside>
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 flex md:hidden">
-          <div className="fixed inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          <aside className={`relative w-64 bg-gradient-to-b from-[#000080] to-[#000080]/90 shadow-xl h-full z-50 ${isRTL ? 'right-0' : 'left-0'}`} dir={isRTL ? 'rtl' : 'ltr'}>
-            <Sidebar childId={"1"} onClose={() => setSidebarOpen(false)} showHistory={showHistory} setShowHistory={setShowHistory} />
-          </aside>
+
+      <main className={`flex-1 min-h-screen pt-[64px] pb-safe bg-gray-50 transition-all duration-300 ${isRTL ? 'md:mr-64' : 'md:ml-64'}`}>
+        {/* Header: Child Selector */}
+        <div className="p-4 flex justify-between items-center bg-white shadow-sm sticky top-[64px] z-40 border-b">
+          <h1 className="text-lg font-semibold text-gray-800">{t('chat', 'Chat')}</h1>
+          {loadingChildren ? (
+            <div className="animate-pulse h-8 w-40 bg-gray-200 rounded-md" />
+          ) : (
+            <select
+              className="text-sm px-3 py-2 border rounded bg-white"
+              value={currentChild?.id || ''}
+              onChange={(e) => handleChildSelect(Number(e.target.value))}
+            >
+              <option value="">{t('selectChild', 'Select a child')}</option>
+              {children.map(child => (
+                <option key={child.id} value={child.id}>
+                  {child.name} (age {child.age})
+                </option>
+              ))}
+            </select>
+          )}
         </div>
-      )}
-      {/* Main Chat Area: offset for sidebar and appbar */}
-      <main className={`flex flex-col flex-1 min-h-screen pt-[64px] pb-safe bg-gray-50 transition-all duration-300 ${sidebarCollapsed ? (isRTL ? 'md:mr-20' : 'md:ml-20') : (isRTL ? 'md:mr-80' : 'md:ml-80')}`}>
-        {/* Hamburger Button for mobile */}
-        <button
-          className={`md:hidden fixed top-4 ${isRTL ? 'right-4' : 'left-4'} z-50 bg-[#000080] text-white rounded-full p-2 shadow-lg`}
-          onClick={() => setSidebarOpen(true)}
-          aria-label={t('openSidebar', 'Open sidebar')}
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-        </button>
+
         {/* Error Message */}
         {error && (
-           <div className="mx-4 mt-2 mb-1 p-2 bg-red-50 border border-red-200 rounded-lg animate-fadeIn text-sm max-w-screen-md mx-auto">
-            <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-              <span className="text-red-700">{error}</span>
-            </div>
+          <div className="m-4 p-3 bg-red-50 border border-red-300 text-red-800 rounded">
+            <p>{error}</p>
           </div>
         )}
-        {/* Messages Container */}
-        <div className={`flex-1 ${!currentChat ? 'flex items-center justify-center min-h-screen bg-gray-50' : 'overflow-y-auto px-2 py-2 space-y-3 bg-gray-50 max-w-screen-md w-full mx-auto'}`} style={{ minHeight: 0 }}>
-          {!currentChat && (
-            <div className="flex flex-col items-center justify-center space-y-4 animate-fadeIn">
-              <div className="w-20 h-20 bg-gradient-to-r from-[#000080] to-[#000080]/90 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg font-medium text-gray-800 mb-2">Welcome to AI Chat!</h3>
-                <p className="text-gray-500">Start a new chat to begin your conversation</p>
-              </div>
+
+        {/* Chat Body */}
+        <div className="flex-1 flex flex-col px-4 py-2 space-y-3 max-w-screen-md mx-auto overflow-y-auto">
+          {!currentChat && !loadingChildren && (
+            <div className="text-center text-gray-500 mt-12">
+              {t('noChat', 'Start a conversation by selecting a child.')}
             </div>
           )}
-          {currentChat && currentChat.messages.map((message, index) => (
+
+          {currentChat?.messages.map((msg, idx) => (
             <div
-              key={message.id}
-              className={`flex ${message.fromChild ? 'justify-end' : 'justify-start'} animate-slideIn`}
-              style={{ animationDelay: `${index * 100}ms` }}
+              key={msg.id}
+              className={`flex ${msg.fromChild ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+              style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <div className={`max-w-[90vw] md:max-w-md ${message.fromChild ? 'order-2' : 'order-1'}`}>
+              <div className={`max-w-[90%] md:max-w-md ${msg.fromChild ? 'order-2' : 'order-1'}`}>
                 <div
-                  className={`px-6 py-4 rounded-2xl shadow-sm message-bubble ${
-                    message.fromChild
-                      ? 'bg-gradient-to-r from-[#000080] to-[#000080]/90 text-white rounded-br-md'
-                      : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
+                  className={`px-4 py-3 rounded-xl shadow-sm ${
+                    msg.fromChild
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-sm'
+                      : 'bg-white text-gray-900 border border-gray-200 rounded-bl-sm'
                   }`}
                 >
-                  <p className="text-sm leading-relaxed mb-1 break-words whitespace-pre-wrap">{message.text}</p>
-                  {message.timestamp && (
-                    <p className={`text-xs ${
-                      message.fromChild ? 'text-[#000080]/80' : 'text-gray-400'
-                    }`}>
-                      {formatTime(message.timestamp)}
-                    </p>
+                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                  <p className="text-xs mt-1 text-gray-400">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+
+                  {msg.sentiment && (
+                    <p className="text-xs text-blue-600 mt-1">Sentiment: {msg.sentiment}</p>
                   )}
-                  {/* TTS Play Button for AI messages */}
-                  {!message.fromChild && (
+                  {msg.suggestions?.length > 0 && (
+                    <ul className="text-xs text-blue-700 mt-1 list-disc ml-5">
+                      {msg.suggestions.map((s, i) => (
+                        <li key={i}>{s}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {!msg.fromChild && (
                     <button
-                      className="mt-2 flex items-center space-x-2 text-[#000080] hover:text-blue-700 focus:outline-none"
-                      onClick={() => playTTS(message.id, message.text)}
-                      disabled={playingMessageId === message.id}
+                      className="mt-2 flex items-center gap-1 text-sm text-blue-600 hover:underline"
+                      onClick={() => playTTS(msg.id, msg.text)}
+                      disabled={playingMessageId === msg.id}
                     >
-                      {playingMessageId === message.id ? (
-                        <LoadingSpinner size={18} />
+                      {playingMessageId === msg.id ? (
+                        <LoadingSpinner size={16} />
                       ) : (
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l12 6-12 6V4z" /></svg>
+                        <>
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M6 4l12 6-12 6V4z" />
+                          </svg>
+                          Play
+                        </>
                       )}
-                      <span className="text-xs">Play</span>
                     </button>
                   )}
                 </div>
               </div>
-              {/* Avatar */}
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-3 ${
-                message.fromChild ? 'order-1' : 'order-2'
-              }`}>
-                {message.fromChild ? (
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">U</span>
-                  </div>
-                ) : (
-                  <div className="w-10 h-10 bg-gradient-to-r from-[#000080] to-[#000080]/90 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">AI</span>
-                  </div>
-                )}
-              </div>
             </div>
           ))}
-          {/* Typing Indicator */}
-          {isTyping && currentChat && (
-            <div className="flex justify-start animate-slideIn">
-              <div className="order-2">
-                <div className="px-6 py-4 bg-white text-gray-800 rounded-2xl rounded-bl-md border border-gray-100 shadow-sm">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
+
+          {isTyping && (
+            <div className="flex justify-start animate-fadeIn">
+              <div className="px-4 py-2 bg-white border border-gray-200 rounded-xl">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
                 </div>
-              </div>
-              <div className="w-10 h-10 bg-gradient-to-r from-[#000080] to-[#000080]/90 rounded-full flex items-center justify-center mx-3 order-1">
-                <span className="text-white font-bold text-sm">AI</span>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
-        {/* Message Input Bar */}
+
+        {/* Input Bar */}
         {currentChat && (
-          <div className={`w-full max-w-screen-md mx-auto md:px-2 pb-safe pb-2 z-50 sticky bottom-0 bg-gray-50${showHistory ? ' opacity-50 pointer-events-none' : ''}`}>
+          <div className="sticky bottom-0 bg-gray-50 z-50 max-w-screen-md mx-auto px-4 py-2">
             <MessageInput
               input={input}
               setInput={setInput}
