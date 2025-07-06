@@ -15,7 +15,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
-// import Chat from "./pages/Chat";
+import Chat from "./pages/Chat";
 import ChildProfilePage from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 
@@ -77,14 +77,14 @@ const App: React.FC = () => {
                 </MainLayout>
               }
             />
-{/*             <Route */}
-{/*               path="/verify-email" */}
-{/*               element={ */}
-{/*                 <MainLayout> */}
-{/*                   <VerifyEmail /> */}
-{/*                 </MainLayout> */}
-{/*               } */}
-{/*             /> */}
+            <Route
+              path="/verify-email"
+              element={
+                <MainLayout>
+                  <VerifyEmail />
+                </MainLayout>
+              }
+            />
             <Route
               path="/forgot-password"
               element={
@@ -109,14 +109,14 @@ const App: React.FC = () => {
                 </MainLayout>
               }
             />
-{/*             <Route */}
-{/*               path="/chat" */}
-{/*               element={ */}
-{/*                 <MainLayout> */}
-{/*                   <Chat /> */}
-{/*                 </MainLayout> */}
-{/*               } */}
-{/*             /> */}
+            <Route
+              path="/chat"
+              element={
+                <MainLayout>
+                  <Chat />
+                </MainLayout>
+              }
+            />
             <Route
               path="/child-profiles/:childId"
               element={
