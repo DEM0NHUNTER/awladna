@@ -277,4 +277,4 @@ const ChatPage: React.FC = () => {
   );
 };
 
-export default ChatPage;
+export default Chat;
