@@ -46,7 +46,6 @@ const Chat: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [currentChat?.messages]);
 
-  // Fetch children
   useEffect(() => {
     const fetchChildren = async () => {
       setLoadingChildren(true);
@@ -148,19 +147,27 @@ const Chat: React.FC = () => {
     const child = children.find(c => c.id === id);
     if (child) {
       setCurrentChild({ id: child.id, name: child.name, age: child.age });
-      createNewChat();
+      createNewChat(); // assigns currentChatId
+      setInput('');
+      setError(null);
     }
   };
 
+  // Debug logging
+  useEffect(() => {
+    console.log('Children:', children);
+    console.log('CurrentChild:', currentChild);
+    console.log('CurrentChat:', currentChat);
+  }, [children, currentChild, currentChat]);
+
   return (
     <div className={`min-h-screen flex flex-row bg-white ${isRTL ? 'flex-row-reverse' : ''}`}>
-      {/* Sidebar */}
       <aside className={`hidden md:flex flex-col h-full fixed z-30 top-0 ${isRTL ? 'right-0' : 'left-0'} w-64 bg-[#000080] text-white shadow-xl`}>
         <Sidebar />
       </aside>
 
-      <main className={`flex-1 min-h-screen pt-[64px] pb-safe bg-gray-50 transition-all duration-300 ${isRTL ? 'md:mr-64' : 'md:ml-64'}`}>
-        {/* Header: Child Selector */}
+      <main className={`flex-1 min-h-screen pt-[64px] pb-safe bg-gray-50 ${isRTL ? 'md:mr-64' : 'md:ml-64'}`}>
+        {/* Header: Child Dropdown */}
         <div className="p-4 flex justify-between items-center bg-white shadow-sm sticky top-[64px] z-40 border-b">
           <h1 className="text-lg font-semibold text-gray-800">{t('chat', 'Chat')}</h1>
           {loadingChildren ? (
@@ -188,7 +195,7 @@ const Chat: React.FC = () => {
           </div>
         )}
 
-        {/* Chat Body */}
+        {/* Chat Area */}
         <div className="flex-1 flex flex-col px-4 py-2 space-y-3 max-w-screen-md mx-auto overflow-y-auto">
           {!currentChat && !loadingChildren && (
             <div className="text-center text-gray-500 mt-12">
@@ -260,9 +267,9 @@ const Chat: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Bar */}
-        {currentChat && (
-          <div className="sticky bottom-0 bg-gray-50 z-50 max-w-screen-md mx-auto px-4 py-2">
+        {/* Message Input or Fallback */}
+        <div className="sticky bottom-0 bg-gray-50 z-50 max-w-screen-md mx-auto px-4 py-2">
+          {currentChat ? (
             <MessageInput
               input={input}
               setInput={setInput}
@@ -270,8 +277,12 @@ const Chat: React.FC = () => {
               isTyping={isTyping}
               inputRef={inputRef}
             />
-          </div>
-        )}
+          ) : (
+            <div className="text-center text-gray-400 py-3">
+              {t('selectChildToChat', 'Select a child above to start chatting.')}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
