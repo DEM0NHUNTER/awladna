@@ -14,7 +14,7 @@ interface Child {
   age: number;
 }
 
-const ChatPage: React.FC = () => {
+const Chat: React.FC = () => {
   const { token } = useAuth();
   const {
     chats,
