@@ -1,20 +1,25 @@
 // src/pages/Chat.tsx
-import React, { useEffect, useState, useRef } from 'react';
-import Sidebar from '../components/layout/Sidebar';
-import MessageInput from '../components/chat/MessageInput';
-import { useChatContext } from '../context/ChatContext';
-import { useAuth } from '../context/AuthContext';
-import { fetchChatResponse } from '../api/chat';
-import { useTranslation } from 'react-i18next';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import React, { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import Sidebar from "../components/layout/Sidebar";
+import MessageInput from "../components/chat/MessageInput";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { useChatContext } from "../context/ChatContext";
+import { useAuth } from "../context/AuthContext";
+import { fetchChatResponse } from "../api/chat";
 
 interface Child {
-  id: number;
+  child_id: number;
   name: string;
-  age: number;
+  birth_date: string;
+  gender: string;
+  age?: number; // Optional because it's not returned in backend yet
 }
 
 const Chat: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
+
   const { token } = useAuth();
   const {
     chats,
@@ -25,41 +30,42 @@ const Chat: React.FC = () => {
     addMessageToChat,
     createNewChat,
   } = useChatContext();
-  const currentChat = chats.find(chat => chat.id === currentChatId);
+
   const [children, setChildren] = useState<Child[]>([]);
   const [loadingChildren, setLoadingChildren] = useState(true);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [playingMessageId, setPlayingMessageId] = useState<string | null>(null);
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
+
+  const currentChat = chats.find(chat => chat.id === currentChatId);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [currentChat?.messages]);
 
   useEffect(() => {
     const fetchChildren = async () => {
       setLoadingChildren(true);
       try {
-        const res = await fetch('/api/auth/child', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const res = await fetch("/api/auth/child", {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error('Failed to load child profiles');
         const data = await res.json();
-        setChildren(data.children || []);
+
+        // Handle both array and object response shape
+        const childrenArray: Child[] = Array.isArray(data) ? data : data.children || [];
+        setChildren(childrenArray);
       } catch (err) {
-        setError('Unable to load children.');
+        setError("Unable to load child profiles.");
       } finally {
         setLoadingChildren(false);
       }
@@ -68,8 +74,19 @@ const Chat: React.FC = () => {
     if (token) fetchChildren();
   }, [token]);
 
+  const handleChildSelect = (id: number) => {
+    const child = children.find(c => c.child_id === id);
+    if (child) {
+      const birthYear = new Date(child.birth_date).getFullYear();
+      const currentYear = new Date().getFullYear();
+      const age = currentYear - birthYear;
+      setCurrentChild({ id: child.child_id, name: child.name, age });
+      createNewChat();
+    }
+  };
+
   const sendMessage = async () => {
-    if (!input.trim() || !currentChatId || !currentChat) return;
+    if (!input.trim() || !currentChatId || !currentChild) return;
 
     const userMessage = {
       id: Date.now().toString(),
@@ -79,16 +96,16 @@ const Chat: React.FC = () => {
     };
 
     addMessageToChat(currentChatId, userMessage);
-    setInput('');
+    setInput("");
     setIsTyping(true);
     setError(null);
 
     try {
       const aiData = await fetchChatResponse({
         user_input: userMessage.text,
-        child_id: currentChat.childId,
-        child_age: currentChat.childAge,
-        child_name: currentChat.childName,
+        child_id: currentChild.id,
+        child_age: currentChild.age,
+        child_name: currentChild.name,
       });
 
       const aiMessage = {
@@ -103,7 +120,7 @@ const Chat: React.FC = () => {
 
       addMessageToChat(currentChatId, aiMessage);
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred.');
+      setError(err.message || "An unexpected error occurred.");
     } finally {
       setIsTyping(false);
     }
@@ -112,12 +129,13 @@ const Chat: React.FC = () => {
   const playTTS = async (messageId: string, text: string) => {
     setPlayingMessageId(messageId);
     try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!response.ok) throw new Error('Failed to fetch TTS audio');
+      if (!response.ok) throw new Error("Failed to fetch TTS audio");
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const audioEl = new Audio(url);
@@ -128,9 +146,9 @@ const Chat: React.FC = () => {
         setAudio(null);
         URL.revokeObjectURL(url);
       };
-    } catch (err) {
+    } catch {
       setPlayingMessageId(null);
-      setError('Failed to play audio');
+      setError("Failed to play audio.");
     }
   };
 
@@ -143,82 +161,67 @@ const Chat: React.FC = () => {
     };
   }, [audio]);
 
-  const handleChildSelect = (id: number) => {
-    const child = children.find(c => c.id === id);
-    if (child) {
-      setCurrentChild({ id: child.id, name: child.name, age: child.age });
-      createNewChat(); // assigns currentChatId
-      setInput('');
-      setError(null);
-    }
-  };
-
-  // Debug logging
-  useEffect(() => {
-    console.log('Children:', children);
-    console.log('CurrentChild:', currentChild);
-    console.log('CurrentChat:', currentChat);
-  }, [children, currentChild, currentChat]);
-
   return (
-    <div className={`min-h-screen flex flex-row bg-white ${isRTL ? 'flex-row-reverse' : ''}`}>
-      <aside className={`hidden md:flex flex-col h-full fixed z-30 top-0 ${isRTL ? 'right-0' : 'left-0'} w-64 bg-[#000080] text-white shadow-xl`}>
+    <div className={`min-h-screen flex flex-row bg-white ${isRTL ? "flex-row-reverse" : ""}`}>
+      <aside className={`hidden md:flex fixed top-0 h-full w-64 z-30 ${isRTL ? "right-0" : "left-0"} bg-[#000080] text-white shadow-xl`}>
         <Sidebar />
       </aside>
 
-      <main className={`flex-1 min-h-screen pt-[64px] pb-safe bg-gray-50 ${isRTL ? 'md:mr-64' : 'md:ml-64'}`}>
-        {/* Header: Child Dropdown */}
-        <div className="p-4 flex justify-between items-center bg-white shadow-sm sticky top-[64px] z-40 border-b">
-          <h1 className="text-lg font-semibold text-gray-800">{t('chat', 'Chat')}</h1>
+      <main className={`flex-1 min-h-screen pt-[64px] pb-2 transition-all ${isRTL ? "md:mr-64" : "md:ml-64"} bg-gray-50`}>
+        {/* Header */}
+        <div className="sticky top-[64px] bg-white border-b shadow-sm z-40 p-4 flex justify-between items-center">
+          <h1 className="text-lg font-semibold">{t("chat", "Chat")}</h1>
           {loadingChildren ? (
-            <div className="animate-pulse h-8 w-40 bg-gray-200 rounded-md" />
+            <div className="h-8 w-40 bg-gray-200 rounded-md animate-pulse" />
           ) : (
             <select
-              className="text-sm px-3 py-2 border rounded bg-white"
-              value={currentChild?.id || ''}
+              value={currentChild?.id || ""}
               onChange={(e) => handleChildSelect(Number(e.target.value))}
+              className="text-sm px-3 py-2 border rounded bg-white"
             >
-              <option value="">{t('selectChild', 'Select a child')}</option>
+              <option value="">{t("selectChild", "Select a child")}</option>
               {children.map(child => (
-                <option key={child.id} value={child.id}>
-                  {child.name} (age {child.age})
+                <option key={child.child_id} value={child.child_id}>
+                  {child.name}
                 </option>
               ))}
             </select>
           )}
         </div>
 
-        {/* Error Message */}
+        {/* Error */}
         {error && (
           <div className="m-4 p-3 bg-red-50 border border-red-300 text-red-800 rounded">
-            <p>{error}</p>
+            {error}
           </div>
         )}
 
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col px-4 py-2 space-y-3 max-w-screen-md mx-auto overflow-y-auto">
+        {/* Messages */}
+        <div className="flex-1 px-4 py-2 space-y-3 max-w-screen-md mx-auto overflow-y-auto">
           {!currentChat && !loadingChildren && (
             <div className="text-center text-gray-500 mt-12">
-              {t('noChat', 'Start a conversation by selecting a child.')}
+              {t("noChat", "Start a conversation by selecting a child.")}
             </div>
           )}
 
           {currentChat?.messages.map((msg, idx) => (
             <div
               key={msg.id}
-              className={`flex ${msg.fromChild ? 'justify-end' : 'justify-start'} animate-fadeIn`}
+              className={`flex ${msg.fromChild ? "justify-end" : "justify-start"} animate-fadeIn`}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
-              <div className={`max-w-[90%] md:max-w-md ${msg.fromChild ? 'order-2' : 'order-1'}`}>
+              <div className={`max-w-[90%] md:max-w-md ${msg.fromChild ? "order-2" : "order-1"}`}>
                 <div
                   className={`px-4 py-3 rounded-xl shadow-sm ${
                     msg.fromChild
-                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-sm'
-                      : 'bg-white text-gray-900 border border-gray-200 rounded-bl-sm'
+                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-sm"
+                      : "bg-white text-gray-900 border border-gray-200 rounded-bl-sm"
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                  <p className="text-xs mt-1 text-gray-400">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+                  <p className="text-xs mt-1 text-gray-400">
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </p>
 
                   {msg.sentiment && (
                     <p className="text-xs text-blue-600 mt-1">Sentiment: {msg.sentiment}</p>
@@ -230,6 +233,7 @@ const Chat: React.FC = () => {
                       ))}
                     </ul>
                   )}
+
                   {!msg.fromChild && (
                     <button
                       className="mt-2 flex items-center gap-1 text-sm text-blue-600 hover:underline"
@@ -264,12 +268,13 @@ const Chat: React.FC = () => {
               </div>
             </div>
           )}
+
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Message Input or Fallback */}
-        <div className="sticky bottom-0 bg-gray-50 z-50 max-w-screen-md mx-auto px-4 py-2">
-          {currentChat ? (
+        {/* Input */}
+        {currentChat && (
+          <div className="sticky bottom-0 bg-gray-50 z-50 max-w-screen-md mx-auto px-4 py-2">
             <MessageInput
               input={input}
               setInput={setInput}
@@ -277,12 +282,8 @@ const Chat: React.FC = () => {
               isTyping={isTyping}
               inputRef={inputRef}
             />
-          ) : (
-            <div className="text-center text-gray-400 py-3">
-              {t('selectChildToChat', 'Select a child above to start chatting.')}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
     </div>
   );
