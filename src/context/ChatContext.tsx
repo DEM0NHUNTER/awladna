@@ -1,25 +1,30 @@
+// src/context/ChatContext.tsx
 import React, { createContext, useContext, useState } from 'react';
 
-export interface Message {
+export interface ChatMessage {
   id: string;
   text: string;
   fromChild: boolean;
-  timestamp?: string;
+  timestamp: string;
+  sentiment?: string;
+  sentiment_score?: number;
+  suggestions?: string[];
 }
 
 export interface Chat {
   id: string;
-  topic: string;
-  messages: Message[];
-  createdAt: string;
+  childId: number;
+  childName: string;
+  childAge: number;
+  messages: ChatMessage[];
 }
 
 interface ChatContextType {
   chats: Chat[];
   currentChatId: string | null;
-  createNewChat: () => string;
-  setCurrentChatId: (id: string) => void;
-  addMessageToChat: (chatId: string, message: Message) => void;
+  setCurrentChatId: (id: string | null) => void;
+  addMessageToChat: (chatId: string, message: ChatMessage) => void;
+  createNewChat: (childId: number, childName: string, childAge: number) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -28,50 +33,39 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [chats, setChats] = useState<Chat[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
 
-  const createNewChat = () => {
-    const newId = Date.now().toString();
+  const addMessageToChat = (chatId: string, message: ChatMessage) => {
+    setChats(prev =>
+      prev.map(chat =>
+        chat.id === chatId ? { ...chat, messages: [...chat.messages, message] } : chat
+      )
+    );
+  };
+
+  const createNewChat = (childId: number, childName: string, childAge: number) => {
     const newChat: Chat = {
-      id: newId,
-      topic: 'New Chat',
+      id: Date.now().toString(),
+      childId,
+      childName,
+      childAge,
       messages: [],
-      createdAt: new Date().toISOString(),
     };
-    setChats(prev => [newChat, ...prev]);
-    setCurrentChatId(newId);
-    return newId;
+    setChats(prev => [...prev, newChat]);
+    setCurrentChatId(newChat.id);
   };
 
-  const addMessageToChat = (chatId: string, message: Message) => {
-    setChats(prev => prev.map(chat => {
-      if (chat.id === chatId) {
-        // If this is the first user message, set as topic
-        let topic = chat.topic;
-        if (chat.messages.length === 0 && message.fromChild) {
-          topic = message.text.slice(0, 40) + (message.text.length > 40 ? '...' : '');
-        }
-        return {
-          ...chat,
-          topic,
-          messages: [...chat.messages, message],
-        };
-      }
-      return chat;
-    }));
-  };
-
-  const value: ChatContextType = {
-    chats,
-    currentChatId,
-    createNewChat,
-    setCurrentChatId,
-    addMessageToChat,
-  };
-
-  return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;
+  return (
+    <ChatContext.Provider value={{ chats, currentChatId, setCurrentChatId, addMessageToChat, createNewChat }}>
+      {children}
+    </ChatContext.Provider>
+  );
 };
 
-export const useChatContext = () => {
-  const ctx = useContext(ChatContext);
-  if (!ctx) throw new Error('useChatContext must be used within ChatProvider');
-  return ctx;
-}; 
+export const useChatContext = (): ChatContextType => {
+  const context = useContext(ChatContext);
+  if (!context) {
+    throw new Error('useChatContext must be used within a ChatProvider');
+  }
+  return context;
+};
+
+export default ChatContext;
